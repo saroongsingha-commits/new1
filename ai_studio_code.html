@@ -567,163 +567,423 @@
         </div>
       </section>
 
-      <!-- TAB 2: CHAINING WORKFLOW -->
-      <section x-show="activeTab === 'chaining'" class="flex-1 flex flex-col md:flex-row w-full h-full overflow-hidden" x-cloak>
-        <!-- Left: Workflow Builder Steps -->
-        <div class="flex-1 flex flex-col border-r border-slate-800 h-full overflow-hidden bg-slate-950">
-          <!-- Chaining Header -->
-          <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
-            <div>
-              <h2 class="text-xs font-semibold text-white flex items-center gap-2">
-                <i data-lucide="workflow" class="w-4 h-4 text-indigo-400"></i>
-                Pipeline Investigasi Bertahap (Tahap 1 s.d. 4 & Nano Fokus)
-              </h2>
-              <p class="text-[11px] text-slate-400">Menjalankan alur berantai terpadu: Infrastruktur Sandbox $\rightarrow$ Analisa Jejak $\rightarrow$ Pelaporan Takedown $\rightarrow$ Final Work Report.</p>
+      <!-- TAB 2: CHAINING WORKFLOW & INVESTIGATION DASHBOARD -->
+      <section x-show="activeTab === 'chaining'" class="flex-1 flex flex-col w-full h-full overflow-hidden bg-slate-950" x-cloak>
+        
+        <!-- Dashboard Top Control & Telemetry Banner -->
+        <div class="border-b border-slate-800 bg-slate-900/80 px-4 py-3 shrink-0">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            
+            <!-- Left: Case ID & Playbook Selector -->
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-lg bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shrink-0">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-xs font-bold text-white tracking-wide uppercase">Investigation Workflow Dashboard</h2>
+                  <span class="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30" x-text="variableValues['case_id'] || 'CCU-CASE-ID'"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded font-mono font-medium" 
+                        :class="isRunningChain ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse' : (chainExecutionResults.length > 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400')">
+                    <span x-text="isRunningChain ? 'EXECUTING PIPELINE' : (chainExecutionResults.length > 0 ? 'PIPELINE COMPLETED' : 'READY TO RUN')"></span>
+                  </span>
+                </div>
+                <p class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                  <span>Operator: <strong class="text-slate-200 font-mono" x-text="variableValues['officer_callsign'] || 'Investigator'"></strong></span>
+                  <span class="text-slate-600">•</span>
+                  <span>Standar: <strong class="text-slate-200">ISO/IEC 27037 & RFC 3161</strong></span>
+                </p>
+              </div>
             </div>
+
+            <!-- Center: Quick SOP Playbook Loader -->
+            <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+              <span class="text-[10px] text-slate-400 px-2 font-medium">Playbook:</span>
+              <button 
+                @click="loadPlaybook('standard')" 
+                title="Muat alur lengkap Tahap 1 s.d. 4"
+                class="px-2 py-1 rounded text-[11px] font-medium transition"
+                :class="activePlaybook === 'standard' ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'">
+                SOP Lengkap (1-4)
+              </button>
+              <button 
+                @click="loadPlaybook('fast_takedown')" 
+                title="Muat alur tanggap darurat takedown (StopNCII + Kominfo + Telegram)"
+                class="px-2 py-1 rounded text-[11px] font-medium transition"
+                :class="activePlaybook === 'fast_takedown' ? 'bg-rose-600 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'">
+                Tanggap Darurat Takedown
+              </button>
+              <button 
+                @click="loadPlaybook('osint_attribution')" 
+                title="Muat alur pelacakan sindikat promotor iklan X dan grup Telegram"
+                class="px-2 py-1 rounded text-[11px] font-medium transition"
+                :class="activePlaybook === 'osint_attribution' ? 'bg-violet-600 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'">
+                Pelacakan Iklan OSINT
+              </button>
+            </div>
+
+            <!-- Right: Actions -->
             <div class="flex items-center gap-2">
               <button 
                 @click="addChainStep()" 
-                class="flex items-center gap-1 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">
-                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5 text-indigo-400"></i>
                 <span>Tambah Tahap</span>
               </button>
+
               <button 
                 @click="executeChain()" 
                 :disabled="chainSteps.length === 0 || isRunningChain"
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition">
                 <i :data-lucide="isRunningChain ? 'loader-2' : 'play'" :class="isRunningChain ? 'animate-spin' : ''" class="w-3.5 h-3.5"></i>
-                <span x-text="isRunningChain ? 'Mengeksekusi Pipeline...' : 'Jalankan Pipeline'"></span>
+                <span x-text="isRunningChain ? 'Mengeksekusi Pipeline...' : 'Jalankan Seluruh Pipeline'"></span>
               </button>
             </div>
           </div>
 
-          <!-- Chain Steps List -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-4">
-            <template x-for="(step, index) in chainSteps" :key="step.id">
-              <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3 relative group">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 flex items-center justify-center font-mono font-bold text-xs" x-text="index + 1"></span>
-                    <h3 class="text-xs font-semibold text-slate-200">Fase Eksekusi <span x-text="index + 1"></span></h3>
-                  </div>
+          <!-- Stepper Visual Phase Progress Bar -->
+          <div class="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-slate-800/60 text-[11px]">
+            <!-- Phase 1 -->
+            <div class="p-2 rounded-lg border transition"
+                 :class="getPhaseStatus(1) === 'done' ? 'bg-amber-950/30 border-amber-800/60 text-amber-200' : (getPhaseStatus(1) === 'running' ? 'bg-amber-900/40 border-amber-500 text-amber-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[10px] font-mono">TAHAP 1: INFRASTRUKTUR</span>
+                <i :data-lucide="getPhaseStatus(1) === 'done' ? 'check-circle' : 'shield'" class="w-3.5 h-3.5 text-amber-400"></i>
+              </div>
+              <p class="text-[10px] truncate mt-0.5 text-slate-400">Sandbox Kali & auto_hasher</p>
+            </div>
 
-                  <div class="flex items-center gap-1">
-                    <button 
-                      @click="moveChainStep(index, -1)" 
-                      :disabled="index === 0" 
-                      class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
-                      <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button 
-                      @click="moveChainStep(index, 1)" 
-                      :disabled="index === chainSteps.length - 1" 
-                      class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
-                      <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button 
-                      @click="removeChainStep(index)" 
-                      class="p-1 text-slate-400 hover:text-rose-400 transition ml-1">
-                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                    </button>
-                  </div>
-                </div>
+            <!-- Phase 2 -->
+            <div class="p-2 rounded-lg border transition"
+                 :class="getPhaseStatus(2) === 'done' ? 'bg-indigo-950/30 border-indigo-800/60 text-indigo-200' : (getPhaseStatus(2) === 'running' ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[10px] font-mono">TAHAP 2: EKSTRAKSI DATA</span>
+                <i :data-lucide="getPhaseStatus(2) === 'done' ? 'check-circle' : 'search'" class="w-3.5 h-3.5 text-indigo-400"></i>
+              </div>
+              <p class="text-[10px] truncate mt-0.5 text-slate-400">Scraping Telegram & Iklan X</p>
+            </div>
 
-                <!-- Template Selector -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Pilih Modul Prompt (Master / Sub / Micro / Nano)</label>
-                    <select 
-                      x-model="step.promptId" 
-                      @change="onStepPromptChange(step)"
-                      class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                      <option value="">-- Pilih Prompt Investigasi --</option>
-                      <template x-for="p in prompts" :key="p.id">
-                        <option :value="p.id" x-text="'[' + (p.level || 'MODUL').toUpperCase() + '] ' + p.title"></option>
-                      </template>
-                    </select>
-                  </div>
+            <!-- Phase 3 -->
+            <div class="p-2 rounded-lg border transition"
+                 :class="getPhaseStatus(3) === 'done' ? 'bg-rose-950/30 border-rose-800/60 text-rose-200' : (getPhaseStatus(3) === 'running' ? 'bg-rose-900/40 border-rose-500 text-rose-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[10px] font-mono">TAHAP 3: TAKEDOWN KOORDINASI</span>
+                <i :data-lucide="getPhaseStatus(3) === 'done' ? 'check-circle' : 'ban'" class="w-3.5 h-3.5 text-rose-400"></i>
+              </div>
+              <p class="text-[10px] truncate mt-0.5 text-slate-400">StopNCII, Kominfo & Abuse</p>
+            </div>
 
-                  <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Mode Masukan Data</label>
-                    <select 
-                      x-model="step.sourceMode" 
-                      class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-                      <option value="direct">Parameter Mandiri (Manual Values)</option>
-                      <option value="pipe_previous" :disabled="index === 0">Pipa Hasil dari Fase <span x-text="index"></span></option>
-                    </select>
-                  </div>
-                </div>
+            <!-- Phase 4 -->
+            <div class="p-2 rounded-lg border transition"
+                 :class="getPhaseStatus(4) === 'done' ? 'bg-emerald-950/30 border-emerald-800/60 text-emerald-200' : (getPhaseStatus(4) === 'running' ? 'bg-emerald-900/40 border-emerald-500 text-emerald-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-[10px] font-mono">TAHAP 4: FINAL BAP & ARSIP</span>
+                <i :data-lucide="getPhaseStatus(4) === 'done' ? 'check-circle' : 'file-check'" class="w-3.5 h-3.5 text-emerald-400"></i>
+              </div>
+              <p class="text-[10px] truncate mt-0.5 text-slate-400">BAP Laporan Kerja & GPG Seal</p>
+            </div>
+          </div>
+        </div>
 
-                <!-- Step Variables Mapping -->
-                <div x-show="step.variables && step.variables.length > 0" class="pt-2 border-t border-slate-800/60 space-y-2">
-                  <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Injeksi Parameter Tahapan</span>
-                  <div class="grid grid-cols-1 gap-2">
-                    <template x-for="v in step.variables" :key="v">
-                      <div class="flex items-center gap-2">
-                        <span class="text-[11px] font-mono text-indigo-300 w-36 shrink-0 truncate" x-text="'{{' + v + '}}'"></span>
-                        <input 
-                          type="text" 
-                          x-model="step.variableValues[v]" 
-                          :placeholder="step.sourceMode === 'pipe_previous' && index > 0 ? 'Diteruskan otomatis dari Fase ' + index : 'Nilai parameter...'"
-                          class="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+        <!-- Dashboard Canvas (2 Panels: Workflow Steps & Execution Dossier) -->
+        <div class="flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+          
+          <!-- Left Panel: Interactive Workflow Canvas -->
+          <div class="flex-1 flex flex-col border-r border-slate-800 h-full overflow-hidden bg-slate-950">
+            <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="git-commit" class="w-4 h-4 text-indigo-400"></i>
+                <h3 class="text-xs font-semibold text-white">Alur Fase Operasional (<span x-text="chainSteps.length"></span> Langkah)</h3>
+              </div>
+              <div class="text-[11px] text-slate-400">
+                Pipa data otomatis mengalir dari fase atas ke fase bawah
+              </div>
+            </div>
+
+            <!-- Steps List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+              <template x-for="(step, index) in chainSteps" :key="step.id">
+                <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5 space-y-3 relative group transition hover:border-slate-700">
+                  
+                  <!-- Step Card Header -->
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <span class="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 flex items-center justify-center font-mono font-bold text-xs" x-text="index + 1"></span>
+                      <div>
+                        <h4 class="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <span>Fase <span x-text="index + 1"></span>:</span>
+                          <span class="text-indigo-300" x-text="getStepPromptTitle(step.promptId)"></span>
+                        </h4>
                       </div>
-                    </template>
+                    </div>
+
+                    <!-- Step Controls -->
+                    <div class="flex items-center gap-1">
+                      <button 
+                        @click="executeSingleStep(index)" 
+                        :disabled="isRunningChain"
+                        title="Jalankan hanya tahap ini"
+                        class="px-2 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white text-[10px] font-medium transition flex items-center gap-1">
+                        <i data-lucide="play" class="w-3 h-3"></i>
+                        <span>Uji</span>
+                      </button>
+                      <button 
+                        @click="openInEditor(step.promptId)" 
+                        title="Buka prompt ini di Editor"
+                        class="p-1 text-slate-400 hover:text-indigo-300 transition">
+                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                      </button>
+                      <button 
+                        @click="moveChainStep(index, -1)" 
+                        :disabled="index === 0" 
+                        class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
+                        <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+                      </button>
+                      <button 
+                        @click="moveChainStep(index, 1)" 
+                        :disabled="index === chainSteps.length - 1" 
+                        class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
+                        <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+                      </button>
+                      <button 
+                        @click="removeChainStep(index)" 
+                        class="p-1 text-slate-400 hover:text-rose-400 transition ml-1">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Dropdown selector & input mode -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Pilih Modul Prompt</label>
+                      <select 
+                        x-model="step.promptId" 
+                        @change="onStepPromptChange(step)"
+                        class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="">-- Pilih Prompt Investigasi --</option>
+                        <template x-for="p in prompts" :key="p.id">
+                          <option :value="p.id" x-text="'[' + (p.level || 'MODUL').toUpperCase() + '] ' + p.title"></option>
+                        </template>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-[10px] text-slate-400 uppercase font-semibold mb-1">Mekanisme Handoff Data</label>
+                      <select 
+                        x-model="step.sourceMode" 
+                        class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="direct">Parameter Mandiri (Manual)</option>
+                        <option value="pipe_previous" :disabled="index === 0">Mewarisi Output Hasil Fase <span x-text="index"></span></option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Step Variables Injection & Expected Artifacts Flow -->
+                  <div x-show="step.variables && step.variables.length > 0" class="pt-2 border-t border-slate-800/60 space-y-2">
+                    <div class="flex items-center justify-between text-[10px] text-slate-400">
+                      <span class="font-semibold uppercase tracking-wider text-slate-500">Injeksi Parameter State Kasus</span>
+                      <span class="text-indigo-400 font-mono" x-text="step.variables.length + ' slot variabel'"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <template x-for="v in step.variables" :key="v">
+                        <div class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded border border-slate-800">
+                          <span class="text-[10px] font-mono text-indigo-300 w-28 shrink-0 truncate" x-text="'{{' + v + '}}'"></span>
+                          <input 
+                            type="text" 
+                            x-model="step.variableValues[v]" 
+                            :placeholder="step.sourceMode === 'pipe_previous' && index > 0 ? 'Pipa dari Fase ' + index : 'Nilai parameter...'"
+                            class="flex-1 bg-transparent text-xs text-slate-200 focus:outline-none placeholder-slate-600 font-sans">
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <!-- Expected Output Flow Tag -->
+                  <div class="pt-1 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span class="flex items-center gap-1">
+                      <i data-lucide="corner-down-right" class="w-3 h-3 text-slate-400"></i>
+                      Artefak Ditargetkan: <span class="text-slate-300 font-sans" x-text="getExpectedArtifactName(step.promptId)"></span>
+                    </span>
+                    <span class="text-emerald-400/80">ISO/IEC 27037 Compliant</span>
                   </div>
                 </div>
-              </div>
-            </template>
+              </template>
 
-            <div x-show="chainSteps.length === 0" class="p-12 text-center text-slate-500 space-y-3">
-              <i data-lucide="git-merge" class="w-10 h-10 text-slate-600 mx-auto"></i>
-              <p class="text-xs">Belum ada tahapan dalam alur pipeline investigasi.</p>
-              <button @click="addChainStep()" class="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition">
-                Tambahkan Fase Pertama
+              <div x-show="chainSteps.length === 0" class="p-12 text-center text-slate-500 space-y-3">
+                <i data-lucide="git-merge" class="w-10 h-10 text-slate-600 mx-auto"></i>
+                <p class="text-xs">Belum ada tahapan dalam alur pipeline investigasi.</p>
+                <div class="flex items-center justify-center gap-2">
+                  <button @click="loadPlaybook('standard')" class="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition">
+                    Muat SOP Standar (1-4)
+                  </button>
+                  <button @click="addChainStep()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition">
+                    Tambah Kustom
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: Communicative Dossier & Execution Telemetry -->
+          <div class="w-full lg:w-[480px] flex flex-col h-full bg-slate-900/40 overflow-hidden shrink-0">
+            
+            <!-- Output Tabs: Dossier, BAP Preview, Execution Trace -->
+            <div class="p-2 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+              <div class="flex items-center gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+                <button 
+                  @click="dossierTab = 'artifacts'; renderIcons()" 
+                  :class="dossierTab === 'artifacts' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'"
+                  class="px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1">
+                  <i data-lucide="folder-check" class="w-3 h-3"></i>
+                  <span>Berkas Bukti</span>
+                </button>
+                <button 
+                  @click="dossierTab = 'bap'; renderIcons()" 
+                  :class="dossierTab === 'bap' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'"
+                  class="px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1">
+                  <i data-lucide="file-text" class="w-3 h-3"></i>
+                  <span>Draft BAP</span>
+                </button>
+                <button 
+                  @click="dossierTab = 'logs'; renderIcons()" 
+                  :class="dossierTab === 'logs' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'"
+                  class="px-2.5 py-1 rounded text-xs font-medium transition flex items-center gap-1">
+                  <i data-lucide="terminal" class="w-3 h-3"></i>
+                  <span>Log Eksekusi</span>
+                </button>
+              </div>
+
+              <!-- Quick Copy / Export -->
+              <button 
+                @click="copyDossierContent()" 
+                class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition flex items-center gap-1">
+                <i data-lucide="copy" class="w-3 h-3 text-indigo-400"></i>
+                <span>Salin Teks</span>
               </button>
             </div>
-          </div>
-        </div>
 
-        <!-- Right: Execution Trace & Pipeline Outputs -->
-        <div class="w-full md:w-[440px] flex flex-col h-full bg-slate-900/40 overflow-hidden shrink-0">
-          <div class="p-3 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
-              <h3 class="text-xs font-semibold text-white">Log Hasil Eksekusi Pipeline</h3>
-            </div>
-            <button 
-              @click="copyFullChainOutput()" 
-              x-show="chainExecutionResults.length > 0"
-              class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition flex items-center gap-1">
-              <i data-lucide="copy" class="w-3 h-3"></i>
-              <span>Salin Semua</span>
-            </button>
-          </div>
+            <!-- Tab Content 1: Berkas Bukti & Artefak Digital (Visual Cards) -->
+            <div x-show="dossierTab === 'artifacts'" class="flex-1 overflow-y-auto p-4 space-y-3">
+              <div class="text-[11px] text-slate-400 flex items-center justify-between pb-1 border-b border-slate-800">
+                <span>Daftar Artefak Bukti & Token Verifikasi</span>
+                <span class="text-emerald-400 font-mono text-[10px]">ISO/IEC 27037 Sealed</span>
+              </div>
 
-          <div class="flex-1 overflow-y-auto p-4 space-y-4">
-            <template x-for="(res, idx) in chainExecutionResults" :key="idx">
+              <!-- Evidence Item 1: Hash Manifest -->
               <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
-                <div class="flex items-center justify-between text-[11px]">
-                  <span class="font-semibold text-indigo-300" x-text="'Fase ' + (idx + 1) + ': ' + res.title"></span>
-                  <span class="text-slate-500 font-mono" x-text="res.time"></span>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
+                    <i data-lucide="hash" class="w-3.5 h-3.5"></i>
+                    Cryptographic Manifest SHA-256
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-900 font-mono">VERIFIED</span>
                 </div>
-                <div class="text-[11px] text-slate-400">
-                  <span class="font-medium text-slate-500">Prompt Terkonstruksi:</span>
-                  <p class="font-mono text-slate-300 bg-slate-900/80 p-2 rounded mt-1 line-clamp-3" x-text="res.prompt"></p>
-                </div>
-                <div class="text-[11px] text-emerald-400">
-                  <span class="font-medium text-emerald-500">Hasil Output Eksekusi:</span>
-                  <p class="font-mono text-emerald-200 bg-emerald-950/30 border border-emerald-900/40 p-2 rounded mt-1 select-text" x-text="res.output"></p>
+                <p class="text-[11px] font-mono text-slate-300 bg-slate-900/80 p-2 rounded break-all select-all">
+                  9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08  /evidence/<span x-text="variableValues['case_id'] || 'CCU-CASE-ID'"></span>/01_raw/evidence_full.tar.gpg
+                </p>
+                <div class="text-[10px] text-slate-500 flex justify-between">
+                  <span>File Integrity Checksum</span>
+                  <span>Non-Repudiation Locked</span>
                 </div>
               </div>
-            </template>
 
-            <div x-show="chainExecutionResults.length === 0" class="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2">
-              <i data-lucide="activity" class="w-8 h-8 text-slate-600"></i>
-              <p class="text-xs">Belum ada riwayat eksekusi pipeline.</p>
-              <p class="text-[11px] text-slate-600">Klik "Jalankan Pipeline" untuk mensimulasikan alur investigasi beruntun.</p>
+              <!-- Evidence Item 2: StopNCII Token -->
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-rose-300 flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    StopNCII.org Perceptual Hash Token (PDQ)
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-900 font-mono">HASH_MATCHING_ACTIVE</span>
+                </div>
+                <p class="text-[11px] font-mono text-rose-200 bg-slate-900/80 p-2 rounded flex items-center justify-between">
+                  <span>Case Token: <strong x-text="variableValues['stopncii_case_id'] || 'SN-8842-9901-ID'"></strong></span>
+                  <span class="text-[10px] text-slate-400">Direct Client-Side Hashed</span>
+                </p>
+                <div class="text-[10px] text-slate-500">
+                  Sinkronisasi Proteksi: Meta (IG/FB), TikTok, OnlyFans, Reddit.
+                </div>
+              </div>
+
+              <!-- Evidence Item 3: AduanKonten Kominfo -->
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-indigo-300 flex items-center gap-1.5">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    Tiket Aduan Resmi Kominfo (aduankonten.id)
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-950/60 text-indigo-300 border border-indigo-900 font-mono">PRIORITY_QUEUE</span>
+                </div>
+                <p class="text-[11px] font-mono text-slate-300 bg-slate-900/80 p-2 rounded">
+                  Tiket: <span class="text-indigo-300 font-bold" x-text="variableValues['kominfo_ticket_id'] || 'ADUAN-KOMINFO-2026-8891'"></span> | Target: <span x-text="variableValues['telegram_target'] || 't.me/target_channel'"></span>
+                </p>
+                <div class="text-[10px] text-slate-500">
+                  Klasifikasi: Penyebaran Konten Intim Tanpa Izin & Pemerasan Siber.
+                </div>
+              </div>
+
+              <!-- Evidence Item 4: GPG Encryption Cold Storage Seal -->
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                    GPG Cold Storage Digital Seal
+                  </span>
+                  <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-900 font-mono">SEALED</span>
+                </div>
+                <p class="text-[11px] font-mono text-emerald-200/90 bg-slate-900/80 p-2 rounded text-[10px]">
+                  Recipient Key: <span x-text="variableValues['investigation_unit_key'] || 'cybercrime-unit@polri.go.id'"></span><br>
+                  Signature Status: Valid Cryptographic Signature Verified
+                </p>
+              </div>
             </div>
+
+            <!-- Tab Content 2: Draft BAP Laporan Kerja Resmi -->
+            <div x-show="dossierTab === 'bap'" class="flex-1 overflow-y-auto p-4 space-y-3">
+              <div class="text-[11px] text-slate-400 flex items-center justify-between pb-1 border-b border-slate-800">
+                <span>Draft Laporan Hasil Investigasi & Takedown (BAP Format)</span>
+                <button @click="copyDraftBap()" class="text-indigo-400 hover:underline text-[10px]">Salin BAP</button>
+              </div>
+
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-200 leading-relaxed whitespace-pre-wrap select-text" x-text="generateBapText()"></div>
+            </div>
+
+            <!-- Tab Content 3: Raw Execution Trace -->
+            <div x-show="dossierTab === 'logs'" class="flex-1 overflow-y-auto p-4 space-y-3">
+              <div class="text-[11px] text-slate-400 flex items-center justify-between pb-1 border-b border-slate-800">
+                <span>Audit Trail Pipeline Real-Time</span>
+                <span class="font-mono text-[10px]" x-text="chainExecutionResults.length + ' log tersimpan'"></span>
+              </div>
+
+              <template x-for="(res, idx) in chainExecutionResults" :key="idx">
+                <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="font-semibold text-indigo-300" x-text="'Fase ' + (idx + 1) + ': ' + res.title"></span>
+                    <span class="text-slate-500 font-mono" x-text="res.time"></span>
+                  </div>
+                  <div class="text-[11px] text-slate-400">
+                    <span class="font-medium text-slate-500 text-[10px]">Prompt Terkonstruksi:</span>
+                    <p class="font-mono text-slate-300 bg-slate-900/80 p-2 rounded mt-0.5 line-clamp-3" x-text="res.prompt"></p>
+                  </div>
+                  <div class="text-[11px] text-emerald-400">
+                    <span class="font-medium text-emerald-500 text-[10px]">Luaran Operasional:</span>
+                    <p class="font-mono text-emerald-200 bg-emerald-950/30 border border-emerald-900/40 p-2 rounded mt-0.5 select-text" x-text="res.output"></p>
+                  </div>
+                </div>
+              </template>
+
+              <div x-show="chainExecutionResults.length === 0" class="h-64 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2">
+                <i data-lucide="terminal" class="w-8 h-8 text-slate-600"></i>
+                <p class="text-xs">Belum ada eksekusi pipeline yang tercatat.</p>
+                <p class="text-[11px] text-slate-600">Klik "Jalankan Seluruh Pipeline" untuk memulai proses investigasi terpadu.</p>
+              </div>
+            </div>
+
           </div>
         </div>
+
       </section>
 
     </main>
@@ -867,7 +1127,9 @@
         simulatedResponse: '',
         toast: { show: false, message: '', type: 'success', timer: null },
         
-        // Chaining State
+        // Chaining & Dashboard State
+        activePlaybook: 'standard', // 'standard', 'fast_takedown', 'osint_attribution'
+        dossierTab: 'artifacts', // 'artifacts', 'bap', 'logs'
         chainSteps: [],
         isRunningChain: false,
         chainExecutionResults: [],
@@ -1603,6 +1865,218 @@ Output Takedown/Artefak: Siap dilampirkan ke BAP dan sistem takedown StopNCII / 
           navigator.clipboard.writeText(text).then(() => {
             this.showToastMessage('Seluruh log hasil pipeline berhasil disalin!');
           });
+        },
+
+        getStepPromptTitle(id) {
+          const p = this.prompts.find(item => item.id === id);
+          return p ? p.title : '(Pilih Prompt)';
+        },
+
+        getExpectedArtifactName(promptId) {
+          if (!promptId) return 'N/A';
+          if (promptId.includes('1_3') || promptId.includes('hasher')) return 'SHA-256 Checksum Manifest & Lock (chmod 444)';
+          if (promptId.includes('1_1') || promptId.includes('kali')) return 'Tor Proxychains Isolated Environment Log';
+          if (promptId.includes('2_1') || promptId.includes('archival')) return 'DOM Snapshot, Headers & Canonical t.me URL';
+          if (promptId.includes('3_1') || promptId.includes('stopncii')) return 'StopNCII PDQ Hash Token & Abuse Escalation Ticket';
+          if (promptId.includes('4_1') || promptId.includes('timeline')) return 'Timeline Matrix & Chain of Custody BAP Dossier';
+          return 'Artefak Terverifikasi ISO/IEC 27037';
+        },
+
+        getPhaseStatus(phaseNum) {
+          if (this.isRunningChain) return 'running';
+          if (this.chainExecutionResults.length >= phaseNum) return 'done';
+          return 'pending';
+        },
+
+        openInEditor(id) {
+          if (!id) return;
+          this.activeTab = 'editor';
+          this.selectPrompt(id);
+          this.showToastMessage('Beralih ke Prompt Editor');
+          this.renderIcons();
+        },
+
+        async executeSingleStep(index) {
+          const step = this.chainSteps[index];
+          if (!step) return;
+          const prompt = this.prompts.find(p => p.id === step.promptId);
+          const title = prompt ? prompt.title : ('Fase ' + (index + 1));
+          let resolved = prompt ? prompt.template : 'No template';
+          (step.variables || []).forEach(v => {
+            const val = step.variableValues[v] || this.variableValues[v] || `[${v}]`;
+            const regex = new RegExp('\\{\\{\\s*' + v + '\\s*\\}\\}', 'g');
+            resolved = resolved.replace(regex, val);
+          });
+
+          this.showToastMessage(`Menguji Fase ${index + 1}...`);
+          await new Promise(r => setTimeout(r, 450));
+          const simOutput = `[UJI TUNGGAL FASE ${index + 1} - ${title}]
+Status: Sukses dieksekusi secara terisolasi.
+Parameter Terinjeksi: ${step.variables ? step.variables.length : 0} variabel.
+Hash Bukti: SHA-256 verified. Sesuai standar ISO/IEC 27037.`;
+
+          this.chainExecutionResults.unshift({
+            title: `[Uji] ${title}`,
+            prompt: resolved,
+            output: simOutput,
+            time: new Date().toLocaleTimeString('id-ID')
+          });
+          this.dossierTab = 'logs';
+          this.showToastMessage(`Uji Fase ${index + 1} selesai!`);
+          this.renderIcons();
+        },
+
+        loadPlaybook(type) {
+          this.activePlaybook = type;
+          if (type === 'standard') {
+            this.chainSteps = this.getDefaultChainSteps();
+            this.showToastMessage('Playbook SOP Lengkap (Tahap 1-4) Dimuat');
+          } else if (type === 'fast_takedown') {
+            this.chainSteps = [
+              {
+                id: 'step_tk_1',
+                promptId: 'nano_3_1_1_stopncii_phash',
+                sourceMode: 'direct',
+                variables: ['case_id', 'stopncii_case_id'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  stopncii_case_id: this.variableValues['stopncii_case_id'] || 'SN-8842-9901-ID'
+                }
+              },
+              {
+                id: 'step_tk_2',
+                promptId: 'micro_3_2_report_templates',
+                sourceMode: 'pipe_previous',
+                variables: ['case_id', 'telegram_target', 'x_ad_target'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  telegram_target: this.variableValues['telegram_target'] || 't.me/priv_leak_vip_channel',
+                  x_ad_target: this.variableValues['x_ad_target'] || '@promo_link_tele69'
+                }
+              },
+              {
+                id: 'step_tk_3',
+                promptId: 'nano_4_1_1_timeline_matrix',
+                sourceMode: 'pipe_previous',
+                variables: ['case_id', 'officer_callsign'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  officer_callsign: this.variableValues['officer_callsign'] || 'CyberOps-Inspector-04'
+                }
+              }
+            ];
+            this.showToastMessage('Playbook Tanggap Darurat Takedown Dimuat');
+          } else if (type === 'osint_attribution') {
+            this.chainSteps = [
+              {
+                id: 'step_os_1',
+                promptId: 'nano_1_1_1_tor_hardening',
+                sourceMode: 'direct',
+                variables: ['case_id', 'officer_callsign'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  officer_callsign: this.variableValues['officer_callsign'] || 'CyberOps-Inspector-04'
+                }
+              },
+              {
+                id: 'step_os_2',
+                promptId: 'nano_2_1_1_x_archival',
+                sourceMode: 'direct',
+                variables: ['case_id', 'x_ad_target'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  x_ad_target: this.variableValues['x_ad_target'] || '@promo_link_tele69'
+                }
+              },
+              {
+                id: 'step_os_3',
+                promptId: 'nano_2_1_2_telegram_provenance',
+                sourceMode: 'pipe_previous',
+                variables: ['case_id', 'telegram_target'],
+                variableValues: {
+                  case_id: this.variableValues['case_id'] || 'CCU-NCII-2026-0987',
+                  telegram_target: this.variableValues['telegram_target'] || 't.me/priv_leak_vip_channel'
+                }
+              }
+            ];
+            this.showToastMessage('Playbook Pelacakan Iklan OSINT Dimuat');
+          }
+          this.saveChain();
+          this.renderIcons();
+        },
+
+        generateBapText() {
+          const caseId = this.variableValues['case_id'] || 'CCU-NCII-2026-0987';
+          const officer = this.variableValues['officer_callsign'] || 'CyberOps-Inspector-04';
+          const tgTarget = this.variableValues['telegram_target'] || 't.me/priv_leak_vip_channel';
+          const xTarget = this.variableValues['x_ad_target'] || '@promo_link_tele69';
+          const stopnciiId = this.variableValues['stopncii_case_id'] || 'SN-8842-9901-ID';
+          const kominfoId = this.variableValues['kominfo_ticket_id'] || 'ADUAN-KOMINFO-2026-8891';
+          const dateStr = new Date().toLocaleDateString('id-ID', { dateStyle: 'full' });
+
+          return `BERITA ACARA PEMERIKSAAN & LAPORAN KERJA TEKNIS FORENSIK DIGITAL
+Nomor Register: ${caseId}
+Klasifikasi Perkara: Doxing & Non-Consensual Intimate Imagery (NCII)
+Standar Kepatuhan: ISO/IEC 27037 & RFC 3161 Trusted Timestamping
+================================================================================
+
+I. DASAR PEMERIKSAAN
+Pada hari ini, ${dateStr}, telah dilaksanakan tindakan penanganan teknis forensik digital, preservasi bukti, dan permohonan pemutusan akses (takedown) terhadap materi intim tanpa hak dan doxing identitas korban yang disebarkan melalui grup Telegram dan diiklankan di platform X.com.
+
+II. IDENTITAS PETUGAS PELAKSANA
+- Nama/Callsign  : ${officer}
+- Kesatuan/Unit  : Unit Khusus Tindak Pidana Siber & Perlindungan Korban Internet
+- Lingkup Kuasa  : Tindakan Forensik & Permohonan Takedown Lintas Platform Resmi
+
+III. ENTITAS DIGITAL TARGET
+1. Kanal/Grup Telegram : ${tgTarget}
+2. Akun/Post Iklan X   : ${xTarget}
+3. Status Isolasi      : Tor SOCKS5 + Proxychains Sandbox (DNS Leak = 0)
+
+IV. RANTAI BUKTI DIGITAL (CHAIN OF CUSTODY MANIFEST)
+- Direktori Kasus     : /evidence/${caseId}/
+- Checksum SHA-256    : 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+- File Status         : Locked Read-Only (chmod 444), GPG Asymmetric Sealed
+
+V. TINDAKAN PEMUTUSAN AKSES (TAKEDOWN COORDINATION)
+1. StopNCII.org       : Kasus terdaftar [Token: ${stopnciiId}], Client-Side PDQ Hash aktif.
+2. AduanKonten Kominfo: Tiket Eskalasi Darurat [ID: ${kominfoId}] untuk blokir ISP/DNS.
+3. Telegram Abuse     : Laporan terkirim ke abuse@telegram.org & @notoscam.
+4. X.com Safety       : Pelaporan iklan promotor dan penyerahan URL rujukan.
+
+VI. KESIMPULAN & REKOMENDASI
+Seluruh artefak bukti digital telah dibekukan secara sah dan tidak dapat disangkal (non-repudiation) untuk kepentingan pembuktian persidangan atau penindakan hukum lanjutan.
+
+Dibuat dengan sebenarnya di Laboratorium Forensik Siber.
+Petugas Pemeriksa,
+
+(${officer})`;
+        },
+
+        copyDraftBap() {
+          const text = this.generateBapText();
+          navigator.clipboard.writeText(text).then(() => {
+            this.showToastMessage('Draft BAP resmi berhasil disalin ke clipboard!');
+          });
+        },
+
+        copyDossierContent() {
+          if (this.dossierTab === 'bap') {
+            this.copyDraftBap();
+          } else if (this.dossierTab === 'logs') {
+            this.copyFullChainOutput();
+          } else {
+            const caseId = this.variableValues['case_id'] || 'CCU-CASE-ID';
+            const text = `DOSSIER ARTEFAK KASUS: ${caseId}
+- SHA-256 Manifest: 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+- StopNCII Token: ${this.variableValues['stopncii_case_id'] || 'SN-8842-9901-ID'}
+- Tiket Kominfo: ${this.variableValues['kominfo_ticket_id'] || 'ADUAN-KOMINFO-2026-8891'}
+- Target Telegram: ${this.variableValues['telegram_target'] || 't.me/target'}
+- Standar: ISO/IEC 27037 & RFC 3161`;
+            navigator.clipboard.writeText(text).then(() => {
+              this.showToastMessage('Ringkasan berkas bukti disalin!');
+            });
+          }
         },
 
         getDefaultPrompts() {
