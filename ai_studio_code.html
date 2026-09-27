@@ -533,6 +533,31 @@
                 </button>
               </div>
 
+              <!-- Contextual Notice: Tahap 1 Pre-Incident vs Tahap 2+ Active Case -->
+              <div x-show="isPhaseOnePrompt(currentPrompt)" class="p-3 bg-amber-950/30 border-b border-amber-900/40 text-[11px] text-amber-200 flex items-start gap-2">
+                <i data-lucide="info" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+                <div class="space-y-0.5">
+                  <strong class="text-amber-300 font-semibold block">Tahap 1: Kesiapan Lab (Pre-Incident)</strong>
+                  <p class="text-slate-300 leading-relaxed">
+                    Fase persiapan infrastruktur & OPSEC bersifat baseline lab mandiri yang wajib disiapkan <strong>sebelum kasus ada</strong>. Variabel kasus spesifik (<code class="text-indigo-300 font-mono">case_id</code>, <code class="text-indigo-300 font-mono">telegram_target</code>, dll.) <strong>baru aktif mulai Tahap 2 (Eksekusi Investigasi)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div x-show="!isPhaseOnePrompt(currentPrompt) && currentPrompt && currentPrompt.level !== 'master'" class="px-3 py-2 bg-indigo-950/20 border-b border-indigo-900/30 text-[11px] text-indigo-200 flex items-center justify-between">
+                <span class="flex items-center gap-1.5 font-medium">
+                  <i data-lucide="target" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  Injeksi Kasus Aktif: <strong class="text-white font-mono" x-text="variableValues['case_id'] || 'CCU-NCII-2026-0987'"></strong>
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded font-mono font-semibold" 
+                      :class="{
+                        'bg-indigo-900/60 text-indigo-300 border border-indigo-700/50': currentPrompt && (currentPrompt.id.includes('_2_') || (currentPrompt.tags && currentPrompt.tags.includes('Tahap-2'))),
+                        'bg-rose-900/60 text-rose-300 border border-rose-700/50': currentPrompt && (currentPrompt.id.includes('_3_') || (currentPrompt.tags && currentPrompt.tags.includes('Tahap-3'))),
+                        'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50': currentPrompt && (currentPrompt.id.includes('_4_') || (currentPrompt.tags && currentPrompt.tags.includes('Tahap-4')))
+                      }"
+                      x-text="getPhaseBadgeText(currentPrompt)"></span>
+              </div>
+
               <!-- Variable inputs list -->
               <div class="flex-1 overflow-y-auto p-3 space-y-3">
                 <template x-for="v in currentVariables" :key="v">
@@ -696,27 +721,27 @@
             <div class="p-2 rounded-lg border transition"
                  :class="getPhaseStatus(1) === 'done' ? 'bg-amber-950/30 border-amber-800/60 text-amber-200' : (getPhaseStatus(1) === 'running' ? 'bg-amber-900/40 border-amber-500 text-amber-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-[10px] font-mono">TAHAP 1: INFRASTRUKTUR</span>
+                <span class="font-bold text-[10px] font-mono">TAHAP 1: PRE-INCIDENT</span>
                 <i :data-lucide="getPhaseStatus(1) === 'done' ? 'check-circle' : 'shield'" class="w-3.5 h-3.5 text-amber-400"></i>
               </div>
-              <p class="text-[10px] truncate mt-0.5 text-slate-400">Sandbox Kali & auto_hasher</p>
+              <p class="text-[10px] truncate mt-0.5 text-amber-300/80 font-medium">Persiapan Lab (Bebas Kasus)</p>
             </div>
 
             <!-- Phase 2 -->
             <div class="p-2 rounded-lg border transition"
                  :class="getPhaseStatus(2) === 'done' ? 'bg-indigo-950/30 border-indigo-800/60 text-indigo-200' : (getPhaseStatus(2) === 'running' ? 'bg-indigo-900/40 border-indigo-500 text-indigo-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-[10px] font-mono">TAHAP 2: EKSTRAKSI DATA</span>
+                <span class="font-bold text-[10px] font-mono">TAHAP 2: INGEST KASUS</span>
                 <i :data-lucide="getPhaseStatus(2) === 'done' ? 'check-circle' : 'search'" class="w-3.5 h-3.5 text-indigo-400"></i>
               </div>
-              <p class="text-[10px] truncate mt-0.5 text-slate-400">Scraping Telegram & Iklan X</p>
+              <p class="text-[10px] truncate mt-0.5 text-indigo-300 font-medium">Variabel Kasus Diaktifkan</p>
             </div>
 
             <!-- Phase 3 -->
             <div class="p-2 rounded-lg border transition"
                  :class="getPhaseStatus(3) === 'done' ? 'bg-rose-950/30 border-rose-800/60 text-rose-200' : (getPhaseStatus(3) === 'running' ? 'bg-rose-900/40 border-rose-500 text-rose-200 animate-pulse' : 'bg-slate-950/60 border-slate-800 text-slate-400')">
               <div class="flex items-center justify-between">
-                <span class="font-bold text-[10px] font-mono">TAHAP 3: TAKEDOWN KOORDINASI</span>
+                <span class="font-bold text-[10px] font-mono">TAHAP 3: TAKEDOWN PLATFORM</span>
                 <i :data-lucide="getPhaseStatus(3) === 'done' ? 'check-circle' : 'ban'" class="w-3.5 h-3.5 text-rose-400"></i>
               </div>
               <p class="text-[10px] truncate mt-0.5 text-slate-400">StopNCII, Kominfo & Abuse</p>
@@ -729,7 +754,7 @@
                 <span class="font-bold text-[10px] font-mono">TAHAP 4: FINAL BAP & ARSIP</span>
                 <i :data-lucide="getPhaseStatus(4) === 'done' ? 'check-circle' : 'file-check'" class="w-3.5 h-3.5 text-emerald-400"></i>
               </div>
-              <p class="text-[10px] truncate mt-0.5 text-slate-400">BAP Laporan Kerja & GPG Seal</p>
+              <p class="text-[10px] truncate mt-0.5 text-slate-400">BAP Berita Acara & GPG Seal</p>
             </div>
           </div>
         </div>
@@ -1394,7 +1419,7 @@ LANGKAH TEKNIS OPERASIONAL:
         },
 
         loadPrompts() {
-          const storageKey = 'promptcraft_cybercrime_prompts_v3_hierarchical';
+          const storageKey = 'promptcraft_cybercrime_prompts_v4_preincident_hierarchy';
           const stored = localStorage.getItem(storageKey);
           if (stored) {
             try {
@@ -1414,7 +1439,7 @@ LANGKAH TEKNIS OPERASIONAL:
         },
 
         savePrompts() {
-          localStorage.setItem('promptcraft_cybercrime_prompts_v3_hierarchical', JSON.stringify(this.prompts));
+          localStorage.setItem('promptcraft_cybercrime_prompts_v4_preincident_hierarchy', JSON.stringify(this.prompts));
         },
 
         selectPrompt(id) {
@@ -1837,7 +1862,7 @@ Standar Kepatuhan: ISO/IEC 27037 & RFC 3161 Trusted Timestamping
 
         // --- Chaining Engine Methods ---
         loadChain() {
-          const stored = localStorage.getItem('promptcraft_cybercrime_chain_v3_hierarchical');
+          const stored = localStorage.getItem('promptcraft_cybercrime_chain_v4_preincident_hierarchy');
           if (stored) {
             try {
               this.chainSteps = JSON.parse(stored);
@@ -1851,7 +1876,7 @@ Standar Kepatuhan: ISO/IEC 27037 & RFC 3161 Trusted Timestamping
         },
 
         saveChain() {
-          localStorage.setItem('promptcraft_cybercrime_chain_v3_hierarchical', JSON.stringify(this.chainSteps));
+          localStorage.setItem('promptcraft_cybercrime_chain_v4_preincident_hierarchy', JSON.stringify(this.chainSteps));
         },
 
         addChainStep() {
@@ -1967,11 +1992,11 @@ Output Takedown/Artefak: Siap dilampirkan ke BAP dan sistem takedown StopNCII / 
 
         getExpectedArtifactName(promptId) {
           if (!promptId) return 'N/A';
-          if (promptId.includes('1_3') || promptId.includes('hasher')) return 'SHA-256 Checksum Manifest & Lock (chmod 444)';
-          if (promptId.includes('1_1') || promptId.includes('kali')) return 'Tor Proxychains Isolated Environment Log';
-          if (promptId.includes('2_1') || promptId.includes('archival')) return 'DOM Snapshot, Headers & Canonical t.me URL';
-          if (promptId.includes('3_1') || promptId.includes('stopncii')) return 'StopNCII PDQ Hash Token & Abuse Escalation Ticket';
-          if (promptId.includes('4_1') || promptId.includes('timeline')) return 'Timeline Matrix & Chain of Custody BAP Dossier';
+          if (promptId.startsWith('nano_1_3') || promptId.startsWith('micro_1_3')) return 'SHA-256 Checksum Manifest & Lock (chmod 444)';
+          if (promptId.startsWith('nano_1_1') || promptId.startsWith('micro_1_1')) return 'Tor Proxychains Isolated Environment Log';
+          if (promptId.startsWith('nano_2_1') || promptId.startsWith('micro_2_1') || promptId.includes('_2_')) return 'DOM Snapshot, Headers & Canonical t.me URL';
+          if (promptId.startsWith('nano_3_1') || promptId.startsWith('micro_3_1') || promptId.includes('_3_')) return 'StopNCII PDQ Hash Token & Abuse Escalation Ticket';
+          if (promptId.startsWith('nano_4_1') || promptId.startsWith('micro_4_1') || promptId.includes('_4_')) return 'Timeline Matrix & Chain of Custody BAP Dossier';
           return 'Artefak Terverifikasi ISO/IEC 27037';
         },
 
@@ -1979,6 +2004,50 @@ Output Takedown/Artefak: Siap dilampirkan ke BAP dan sistem takedown StopNCII / 
           if (this.isRunningChain) return 'running';
           if (this.chainExecutionResults.length >= phaseNum) return 'done';
           return 'pending';
+        },
+
+        isPhaseOnePrompt(p) {
+          if (!p) return false;
+          if (p.level === 'master') return false;
+          
+          // Explicitly check for Phase 2, 3, 4 (Active Case)
+          if (Array.isArray(p.tags)) {
+            if (p.tags.includes('Tahap-2') || p.tags.includes('Tahap-3') || p.tags.includes('Tahap-4')) {
+              return false;
+            }
+          }
+
+          // Check prefix strictly: nano_2_1_1 is Phase 2, NOT Phase 1!
+          if (p.id) {
+            if (p.id.startsWith('sub_tahap_2') || p.id.startsWith('sub_tahap_3') || p.id.startsWith('sub_tahap_4') ||
+                p.id.startsWith('micro_2_') || p.id.startsWith('micro_3_') || p.id.startsWith('micro_4_') ||
+                p.id.startsWith('nano_2_') || p.id.startsWith('nano_3_') || p.id.startsWith('nano_4_')) {
+              return false;
+            }
+            if (p.id.startsWith('sub_tahap_1') || p.id.startsWith('micro_1_') || p.id.startsWith('nano_1_')) {
+              return true;
+            }
+          }
+
+          if (Array.isArray(p.tags) && p.tags.includes('Tahap-1')) {
+            return true;
+          }
+          return false;
+        },
+
+        getPhaseBadgeText(p) {
+          if (!p) return 'Kasus Aktif';
+          if (Array.isArray(p.tags)) {
+            if (p.tags.includes('Tahap-2')) return 'Tahap 2 (Eksekusi Kasus)';
+            if (p.tags.includes('Tahap-3')) return 'Tahap 3 (Takedown)';
+            if (p.tags.includes('Tahap-4')) return 'Tahap 4 (Final BAP)';
+          }
+          if (p.id) {
+            if (p.id.includes('_2_')) return 'Tahap 2 (Eksekusi Kasus)';
+            if (p.id.includes('_3_')) return 'Tahap 3 (Takedown)';
+            if (p.id.includes('_4_')) return 'Tahap 4 (Final BAP)';
+          }
+          return 'Tahap 2-4 (Kasus Aktif)';
         },
 
         openInEditor(id) {
@@ -2211,15 +2280,16 @@ Saat mengeksekusi modul turunan (Sub-Prompt, Micro-Prompt, dan Nano-Prompt), per
               ]
             },
 
-            // ================= 2. TAHAP 1: PERSAPAN INFRASTRUKTUR =================
+            // ================= 2. TAHAP 1: PERSIAPAN INFRASTRUKTUR (PRE-INCIDENT STANDBY) =================
             {
               id: 'sub_tahap_1_infrastruktur',
               level: 'sub',
               parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 1] Inisiasi Lab Forensik & Sistem Monitoring Deteksi Dini',
               tags: ['Tahap-1', 'Sub', 'Infrastruktur', 'Kali-Linux', 'Monitoring', 'OPSEC'],
-              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Operator: {{officer_callsign}}):
+              template: `**[LINGKUP OPERASIONAL: KESIAPAN LAB PRE-INCIDENT (STANDAR TANPA KASUS)]**
 Inisiasi Tahap 1: Persiapan Infrastruktur Lab Forensik dan Sistem Deteksi Dini.
+Catatan Operasional: Tahap 1 adalah kesiapan dasar lingkungan kerja siber (pre-incident baseline) yang wajib digelar sebelum menerima kasus. Tidak memerlukan data kasus spesifik.
 
 Tujuan:
 Membangun lingkungan kerja virtual yang aman (VirtualBox di Windows 11 host), terisolasi dari kebocoran jejak (anti-leak OPSEC & non-attributable network), dan siap menjalankan monitoring preventif terhadap aktivitas doxing/NCII di Telegram dan X.com.
@@ -2236,7 +2306,7 @@ Instruksikan modul ini dengan rincian teknis operasional:
               parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.1] Setup & Konfigurasi Kali Linux Sandbox (VirtualBox on Win11)',
               tags: ['Tahap-1', 'Micro', 'Infrastruktur', 'Kali-Linux', 'Tutorial'],
-              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur Lab (Kesiapan Standar Pre-Incident)
 Aktivitas: Setup Lingkungan Kerja Investigasi Kali Linux di Oracle VirtualBox (Host: Windows 11).
 
 Berikan modul teknis tutorial dan konfigurasi CLI lengkap:
@@ -2258,7 +2328,7 @@ Berikan modul teknis tutorial dan konfigurasi CLI lengkap:
               parentId: 'micro_1_1_kali_setup',
               title: '[NANO 1.1.1] Hardening Jaringan VM Kali & Anti-Leak (Tor, Proxychains, DNS Audit)',
               tags: ['Tahap-1', 'Nano', 'Kali-Linux', 'OPSEC', 'Proxychains'],
-              template: `Konteks: Micro 1.1 Setup Sandbox (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+              template: `Konteks: Micro 1.1 Setup Sandbox Kali Linux (Hardening Jaringan Lab)
 Cabang Fokus: Konfigurasi Hardening Jaringan & Audit Kebocoran Identitas (Anti-Leak OPSEC).
 
 Berikan instruksi CLI spesifik:
@@ -2277,7 +2347,7 @@ Berikan instruksi CLI spesifik:
               parentId: 'micro_1_1_kali_setup',
               title: '[NANO 1.1.2] Toolkit OSINT Forensik & Isolasi Virtualenv CLI (Telethon & Scrapers)',
               tags: ['Tahap-1', 'Nano', 'Kali-Linux', 'Python', 'Virtualenv'],
-              template: `Konteks: Micro 1.1 Setup Sandbox (Kasus: {{case_id}})
+              template: `Konteks: Micro 1.1 Setup Sandbox Kali Linux (Lingkungan Virtual Python)
 Cabang Fokus: Pembuatan Virtual Environment Python Forensik Terisolasi.
 
 Tuliskan skrip instalasi Bash mandiri (setup_env.sh):
@@ -2298,18 +2368,18 @@ Tuliskan skrip instalasi Bash mandiri (setup_env.sh):
               parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.2] Sistem Monitoring Deteksi Dini (Anti-Cloning, Anti-Reupload, Anti-Repost)',
               tags: ['Tahap-1', 'Micro', 'Monitoring', 'Telegram', 'X-Twitter', 'Skrip'],
-              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Target: {{telegram_target}})
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Sistem Monitoring Pasif Pre-Incident)
 Aktivitas: Pembangunan Sistem Deteksi Dini & Scraping Pasif (Anti-Cloning & Anti-Reupload).
 
 Susun modul teknis konfigurasi monitoring otomatis:
 1. Deteksi Iklan Sindikat di X.com:
-   - Konfigurasi kata kunci boolean query (contoh: format t.me/, t.me/joinchat/, kata kunci pencarian: {{search_keywords}}).
+   - Konfigurasi kata kunci boolean query (contoh: format t.me/, t.me/joinchat/, kata kunci pengawasan umum: {{search_keywords}}).
    - Skrip Python pasif untuk mengumpulkan tweet/iklan berulang, ID poster, user creation date, dan link redirect Telegram.
 2. Monitoring Kanal/Grup Telegram:
    - Implementasi Telegram Client API (menggunakan Telethon dengan akun riset dummy burner berotasi proxy).
    - Filter pendeteksi postingan berulang (message hashing / text similarity distance) untuk melacak jaringan channel kloning (mirroring channel).
 3. Aturan Alerting Otomatis:
-   - Format alert JSON ketika terdeteksi tautan target baru {{telegram_target}} yang diiklankan di X.com.`,
+   - Format alert JSON ketika terdeteksi tautan target promosi baru yang diiklankan di X.com.`,
               versions: []
             },
             {
@@ -2318,12 +2388,13 @@ Susun modul teknis konfigurasi monitoring otomatis:
               parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.3] Standardisasi Direktori & Manajemen Chain of Custody Bukti Digital',
               tags: ['Tahap-1', 'Micro', 'Forensik', 'Chain-of-Custody', 'ISO-27037'],
-              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}})
-Aktivitas: Standardisasi Template Direktori & Chain of Custody Digital ISO/IEC 27037.
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Standardisasi Sistem Berkas ISO/IEC 27037)
+Aktivitas: Standardisasi Template Direktori & Chain of Custody Digital.
 
-Rancang skrip Bash struktur penyimpanan bukti digital berstandar internasional:
-1. Hirarki Folder Kasus:
-   /evidence/{{case_id}}/
+Rancang skrip Bash struktur penyimpanan bukti digital berstandar internasional yang disiapkan di root sistem:
+1. Skrip Inisialisasi Template Folder Kasus (init_case_workspace.sh):
+   Struktur standar yang disiapkan untuk setiap kasus baru:
+   /evidence/[NAMA_KASUS]/
    ├── 01_raw_capture/ (Media asli, raw stream, PCAP, screenshot ber-timestamp)
    ├── 02_metadata/ (JSON dump Telegram message, header X.com, DNS logs)
    ├── 03_hashes/ (Log checksum SHA-256 dan MD5)
@@ -2331,7 +2402,7 @@ Rancang skrip Bash struktur penyimpanan bukti digital berstandar internasional:
 2. Skrip otomatisasi penamaan file (File Naming Convention):
    Format: [TIMESTAMP_UTC]_[PLATFORM]_[TARGET_ID]_[ARTEFACT_TYPE].ext
 3. Skrip Bash auto_hasher.sh:
-   Menghitung SHA-256 secara langsung pada setiap file baru yang masuk ke 01_raw_capture/, mengunci izin berkas menjadi Read-Only (chmod 444), dan menuliskan ke {{sha256_manifest}}.`,
+   Menghitung SHA-256 secara langsung pada setiap file baru yang masuk ke 01_raw_capture/ dan mengunci izin berkas menjadi Read-Only (chmod 444).`,
               versions: []
             },
             {
@@ -2340,28 +2411,37 @@ Rancang skrip Bash struktur penyimpanan bukti digital berstandar internasional:
               parentId: 'micro_1_3_directory_custody',
               title: '[NANO 1.3.1] Automasi auto_hasher.sh & Manifest Cryptographic ISO/IEC 27037',
               tags: ['Tahap-1', 'Nano', 'Forensik', 'Bash', 'Hashing'],
-              template: `Konteks: Micro 1.3 Direktori & Custody (Kasus: {{case_id}})
+              template: `Konteks: Micro 1.3 Direktori & Custody (Daemon Hashing Pre-Incident)
 Cabang Fokus: Skrip Daemon/Inotify Automasi Hashing File Masuk.
 
-Tuliskan skrip Bash lengkap auto_hasher.sh yang:
-1. Memantau folder /evidence/{{case_id}}/01_raw_capture/ menggunakan inotifywait atau loop periodic.
+Tuliskan skrip Bash lengkap auto_hasher.sh yang siap dipasang sebagai background service:
+1. Memantau folder input bukti menggunakan inotifywait atau loop periodic.
 2. Ketika file baru selesai ditulis:
    - Hitung SHA-256 dan SHA-512.
-   - Ambil timestamp UTC presisi milidetik.
-   - Catat format tab-separated ke: {{sha256_manifest}}
+   - Ambil timestamp UTC presisi milidetik (RFC 3161 compliant).
+   - Catat format tab-separated ke file manifest hash.
      Format: [TIMESTAMP_UTC]\t[FILE_NAME]\t[SIZE_BYTES]\t[SHA256]\t[SHA512]\t[OFFICER:{{officer_callsign}}]
    - Ubah izin file menjadi read-only: chmod 444 "$file"`,
               versions: []
             },
 
-            // ================= 3. TAHAP 2: EKSEKUSI INVESTIGASI =================
+            // ================= 3. TAHAP 2: EKSEKUSI INVESTIGASI (INGEST KASUS) =================
             {
               id: 'sub_tahap_2_investigasi',
               level: 'sub',
               parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 2] Inisiasi Eksekusi Investigasi Forensik & Analisis Data Digital',
               tags: ['Tahap-2', 'Sub', 'Investigasi', 'OSINT', 'Forensik'],
-              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Target: {{telegram_target}}):
+              template: `**[INGEST KASUS RESMI & AKTIVASI VARIABEL KASUS DINAMIS]**
+Merujuk pada MASTER CONTEXT:
+- Nomor Kasus: {{case_id}}
+- Target Entitas Telegram: {{telegram_target}}
+- Akun / Iklan X.com: {{x_ad_target}}
+- Petugas Penanggung Jawab: {{officer_callsign}}
+- Tanggal Mulai Investigasi: {{investigation_date}}
+
+Perhatian Forensik: Mulai Tahap 2 ini, seluruh Variabel Kasus Dinamis wajib terisi lengkap untuk menjamin keabsahan rantai bukti (chain of custody).
+
 Inisiasi Tahap 2: Eksekusi Investigasi dan Analisis Forensik Digital.
 
 Tujuan:
@@ -2656,20 +2736,16 @@ Rancang SOP teknis dan instruksi CLI pengarsipan digital jangka panjang:
           return [
             {
               id: 'step_1',
-              promptId: 'nano_1_3_1_auto_hasher',
+              promptId: 'nano_1_1_1_sandbox_hardening',
               sourceMode: 'direct',
-              variables: ['case_id', 'sha256_manifest', 'officer_callsign'],
-              variableValues: {
-                case_id: 'CCU-NCII-2026-0987',
-                sha256_manifest: '/evidence/CCU-NCII-2026-0987/03_hashes/hash_manifest.txt',
-                officer_callsign: 'CyberOps-Inspector-04'
-              }
+              variables: [], // Pre-Incident Sandbox Setup (Mandiri Tanpa Kasus)
+              variableValues: {}
             },
             {
               id: 'step_2',
               promptId: 'nano_2_1_1_x_archival',
               sourceMode: 'direct',
-              variables: ['case_id', 'x_ad_target'],
+              variables: ['case_id', 'x_ad_target'], // Ingest Kasus & Variabel Dimulai
               variableValues: {
                 case_id: 'CCU-NCII-2026-0987',
                 x_ad_target: '@promo_link_tele69'
