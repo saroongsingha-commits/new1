@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CyberCrime & NCII Investigation Workbench</title>
-  <meta name="description" content="Workbench sistem prompt hierarkis dan dinamis untuk pelatihan teknis investigasi cybercrime, penanganan doxing dan NCII di Telegram serta iklan X.com.">
+  <meta name="description" content="Workbench sistem prompt hierarkis bertingkat (Master -> Sub -> Micro -> Nano) untuk investigasi cybercrime, doxing, dan NCII di Telegram & X.com.">
   <meta property="og:title" content="CyberCrime & NCII Investigation Workbench">
-  <meta property="og:description" content="Sistem prompt teknis forensik cybercrime & takedown NCII Telegram dan X.com.">
+  <meta property="og:description" content="Sistem prompt forensik cybercrime & takedown NCII bertingkat.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
 
@@ -71,15 +71,16 @@
     <!-- Top Header -->
     <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between z-20 shrink-0">
       <div class="flex items-center gap-3">
-        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600 via-brand-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600 via-violet-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
           <i data-lucide="shield-alert" class="w-5 h-5"></i>
         </div>
         <div>
           <h1 class="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
             CyberCrime & NCII Investigation
             <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30">Official Training Edition</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium bg-violet-500/20 text-violet-300 border border-violet-500/30 hidden md:inline">Multi-Level Hierarchy (Master $\rightarrow$ Sub $\rightarrow$ Micro $\rightarrow$ Nano)</span>
           </h1>
-          <p class="text-[11px] text-slate-400">Teknis Doxing & NCII • Telegram & X.com • Takedown & Chain of Custody</p>
+          <p class="text-[11px] text-slate-400">Teknis Doxing & NCII • Telegram & X.com • ISO/IEC 27037 & Takedown Multi-Platform</p>
         </div>
       </div>
 
@@ -108,7 +109,7 @@
         <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
           <button 
             @click="exportJson()" 
-            title="Backup JSON (Lengkap dengan riwayat versi)" 
+            title="Backup JSON (Lengkap dengan riwayat versi & hierarki)" 
             class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition">
             <i data-lucide="file-json" class="w-3.5 h-3.5 text-indigo-400"></i>
             <span class="hidden sm:inline">Backup JSON</span>
@@ -170,58 +171,101 @@
       <!-- TAB 1: PROMPT EDITOR -->
       <section x-show="activeTab === 'editor'" class="flex-1 flex w-full h-full overflow-hidden">
         <!-- Left Sidebar: Hierarchical Prompt Library -->
-        <aside class="w-80 border-r border-slate-800 bg-slate-900/60 flex flex-col shrink-0">
-          <div class="p-3 border-b border-slate-800 flex flex-col gap-2">
+        <aside class="w-84 border-r border-slate-800 bg-slate-900/60 flex flex-col shrink-0">
+          <div class="p-3 border-b border-slate-800 flex flex-col gap-2.5">
+            <!-- Search Bar -->
             <div class="relative">
               <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
               <input 
                 type="text" 
                 x-model="searchQuery" 
-                placeholder="Cari Master / Sub / Micro prompt..." 
+                placeholder="Cari Master / Sub / Micro / Nano prompt..." 
                 class="w-full bg-slate-950 border border-slate-800 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
             </div>
             
+            <!-- Hierarchy Level Filter Pills -->
+            <div>
+              <div class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Filter Tingkat:</span>
+                <span class="text-slate-400 font-mono" x-text="filteredPrompts.length + ' item'"></span>
+              </div>
+              <div class="grid grid-cols-5 gap-1 text-[10px] text-center font-medium">
+                <button 
+                  @click="selectedLevel = 'all'" 
+                  :class="selectedLevel === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'"
+                  class="py-1 rounded transition">Semua</button>
+                <button 
+                  @click="selectedLevel = 'master'" 
+                  :class="selectedLevel === 'master' ? 'bg-amber-600 text-white font-bold' : 'bg-slate-950 text-amber-400/80 hover:text-amber-300 border border-amber-900/40'"
+                  class="py-1 rounded transition">Master</button>
+                <button 
+                  @click="selectedLevel = 'sub'" 
+                  :class="selectedLevel === 'sub' ? 'bg-indigo-600 text-white font-bold' : 'bg-slate-950 text-indigo-400/80 hover:text-indigo-300 border border-indigo-900/40'"
+                  class="py-1 rounded transition">Sub</button>
+                <button 
+                  @click="selectedLevel = 'micro'" 
+                  :class="selectedLevel === 'micro' ? 'bg-emerald-600 text-white font-bold' : 'bg-slate-950 text-emerald-400/80 hover:text-emerald-300 border border-emerald-900/40'"
+                  class="py-1 rounded transition">Micro</button>
+                <button 
+                  @click="selectedLevel = 'nano'" 
+                  :class="selectedLevel === 'nano' ? 'bg-violet-600 text-white font-bold' : 'bg-slate-950 text-violet-400/80 hover:text-violet-300 border border-violet-900/40'"
+                  class="py-1 rounded transition">Nano</button>
+              </div>
+            </div>
+
             <!-- Tag Filter Pills -->
-            <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[11px] scrollbar-none">
+            <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-[11px] scrollbar-none">
               <button 
                 @click="selectedTag = ''" 
                 :class="selectedTag === '' ? 'bg-indigo-600 text-white font-semibold' : 'bg-slate-800 text-slate-400 hover:text-slate-200'"
-                class="px-2 py-0.5 rounded-full whitespace-nowrap transition">
-                Semua
+                class="px-2 py-0.5 rounded-full whitespace-nowrap transition text-[10px]">
+                #Semua Tag
               </button>
               <template x-for="tag in allTags" :key="tag">
                 <button 
                   @click="selectedTag = (selectedTag === tag ? '' : tag)" 
                   :class="selectedTag === tag ? 'bg-indigo-600 text-white font-semibold' : 'bg-slate-800 text-slate-400 hover:text-slate-200'"
-                  class="px-2 py-0.5 rounded-full whitespace-nowrap transition"
+                  class="px-2 py-0.5 rounded-full whitespace-nowrap transition text-[10px]"
                   x-text="'#' + tag">
                 </button>
               </template>
             </div>
           </div>
 
-          <!-- Prompts List with Category Badges -->
+          <!-- Prompts Hierarchical List -->
           <div class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
             <template x-for="prompt in filteredPrompts" :key="prompt.id">
               <div 
                 @click="selectPrompt(prompt.id)"
-                :class="selectedPromptId === prompt.id ? 'bg-indigo-950/40 border-l-2 border-indigo-500' : 'hover:bg-slate-800/40'"
-                class="p-3 cursor-pointer transition flex flex-col gap-1.5 group">
-                <div class="flex items-start justify-between gap-2">
+                :class="[
+                  selectedPromptId === prompt.id ? 'bg-indigo-950/40 border-l-2 border-indigo-500' : 'hover:bg-slate-800/40',
+                  prompt.level === 'nano' ? 'pl-6 bg-slate-950/30' : (prompt.level === 'micro' ? 'pl-4' : (prompt.level === 'sub' ? 'pl-3' : 'pl-3'))
+                ]"
+                class="p-2.5 cursor-pointer transition flex flex-col gap-1.5 group">
+                <div class="flex items-start justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 overflow-hidden">
+                    <!-- Tree indentation connector for nano -->
+                    <span x-show="prompt.level === 'nano'" class="text-violet-500 text-xs shrink-0 select-none">↳</span>
+                    
+                    <!-- Level Badges -->
                     <span 
-                      class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0"
-                      :class="prompt.title.includes('[MASTER]') ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : (prompt.title.includes('[SUB-PROMPT') ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30')">
-                      <span x-text="prompt.title.includes('[MASTER]') ? 'MASTER' : (prompt.title.includes('[SUB-PROMPT') ? 'SUB' : 'MICRO')"></span>
+                      class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0 tracking-wide"
+                      :class="{
+                        'bg-amber-500/20 text-amber-300 border border-amber-500/30': prompt.level === 'master',
+                        'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30': prompt.level === 'sub',
+                        'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30': prompt.level === 'micro',
+                        'bg-violet-500/20 text-violet-300 border border-violet-500/30': prompt.level === 'nano'
+                      }">
+                      <span x-text="prompt.level ? prompt.level.toUpperCase() : 'PROMPT'"></span>
                     </span>
                     <h3 class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 transition truncate" x-text="prompt.title"></h3>
                   </div>
                   <span class="text-[10px] text-slate-500 font-mono shrink-0" x-text="prompt.versions ? prompt.versions.length + 'v' : '1v'"></span>
                 </div>
                 <p class="text-[11px] text-slate-400 line-clamp-2 font-mono leading-relaxed" x-text="prompt.template"></p>
-                <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center justify-between pt-0.5">
                   <div class="flex flex-wrap gap-1">
-                    <template x-for="tag in prompt.tags" :key="tag">
+                    <template x-for="tag in (prompt.tags || []).slice(0, 3)" :key="tag">
                       <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/50" x-text="'#' + tag"></span>
                     </template>
                   </div>
@@ -239,7 +283,7 @@
 
           <!-- Library Footer Summary -->
           <div class="p-2.5 border-t border-slate-800 bg-slate-950/80 text-[11px] text-slate-400 flex items-center justify-between">
-            <span x-text="prompts.length + ' Prompt Modul Terdaftar'"></span>
+            <span x-text="prompts.length + ' Modul (Master/Sub/Micro/Nano)'"></span>
             <button @click="resetToDefaults()" class="hover:text-indigo-400 underline decoration-slate-600 transition">Reset Modul Resmi</button>
           </div>
         </aside>
@@ -249,9 +293,61 @@
           
           <!-- Middle Column: Prompt Template Editor -->
           <div class="flex-1 flex flex-col border-r border-slate-800 h-full overflow-hidden">
+            
+            <!-- Hierarchical Breadcrumb Navigation Bar -->
+            <div class="px-4 py-2 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+                <span class="text-slate-500 flex items-center gap-1">
+                  <i data-lucide="git-branch" class="w-3 h-3 text-indigo-400"></i>
+                  Struktur:
+                </span>
+                
+                <!-- Master ancestor -->
+                <button 
+                  @click="jumpToParent('master')" 
+                  class="font-mono text-amber-400 hover:underline">
+                  [MASTER]
+                </button>
+                
+                <span x-show="currentPrompt.level !== 'master'" class="text-slate-600">/</span>
+                <span x-show="currentPrompt.level === 'sub' || currentPrompt.level === 'micro' || currentPrompt.level === 'nano'" 
+                      class="text-indigo-400 font-mono" 
+                      x-text="currentPrompt.tags && currentPrompt.tags.find(t => t.startsWith('Tahap-')) ? currentPrompt.tags.find(t => t.startsWith('Tahap-')) : 'Sub-Tahap'"></span>
+                
+                <span x-show="currentPrompt.level === 'micro' || currentPrompt.level === 'nano'" class="text-slate-600">/</span>
+                <span x-show="currentPrompt.level === 'micro' || currentPrompt.level === 'nano'" 
+                      class="text-emerald-400 font-mono truncate max-w-[140px]" 
+                      x-text="parentPromptTitle || 'Micro-Aktivitas'"></span>
+                
+                <span x-show="currentPrompt.level === 'nano'" class="text-slate-600">/</span>
+                <span x-show="currentPrompt.level === 'nano'" class="text-violet-400 font-mono font-bold">Fokus Nano</span>
+              </div>
+
+              <!-- Quick action to split/branch into deeper Nano prompt -->
+              <div class="flex items-center gap-2">
+                <button 
+                  @click="openSplitModal()" 
+                  title="Pecah modul ini menjadi cabang Nano-Prompt yang lebih fokus (perintah CLI / SOP terfokus)" 
+                  class="flex items-center gap-1 px-2.5 py-1 rounded bg-violet-600/90 hover:bg-violet-600 text-white font-medium text-[11px] shadow-sm shadow-violet-600/20 transition">
+                  <i data-lucide="git-fork" class="w-3 h-3"></i>
+                  <span>Pecah Sub-Fokus (Nano)</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Editor Subheader -->
             <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between gap-3">
               <div class="flex-1 flex items-center gap-2">
+                <span 
+                  class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0 tracking-wide uppercase"
+                  :class="{
+                    'bg-amber-500/20 text-amber-300 border border-amber-500/30': currentPrompt.level === 'master',
+                    'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30': currentPrompt.level === 'sub',
+                    'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30': currentPrompt.level === 'micro',
+                    'bg-violet-500/20 text-violet-300 border border-violet-500/30': currentPrompt.level === 'nano'
+                  }"
+                  x-text="currentPrompt.level || 'MICRO'">
+                </span>
                 <input 
                   type="text" 
                   x-model="currentPrompt.title" 
@@ -299,6 +395,23 @@
               </div>
             </div>
 
+            <!-- Child Nano Branches Bar (if any exists for current prompt) -->
+            <div x-show="childPrompts.length > 0" class="px-4 py-1.5 bg-violet-950/20 border-b border-violet-900/30 flex items-center gap-2 text-xs">
+              <span class="text-violet-300 font-medium text-[11px] shrink-0 flex items-center gap-1">
+                <i data-lucide="git-merge" class="w-3 h-3"></i>
+                Cabang Nano Fokus (<span x-text="childPrompts.length"></span>):
+              </span>
+              <div class="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                <template x-for="child in childPrompts" :key="child.id">
+                  <button 
+                    @click="selectPrompt(child.id)"
+                    class="px-2 py-0.5 rounded text-[10px] bg-violet-900/40 text-violet-200 border border-violet-800/60 hover:bg-violet-800 transition whitespace-nowrap font-mono"
+                    x-text="child.title">
+                  </button>
+                </template>
+              </div>
+            </div>
+
             <!-- Editor Info Bar -->
             <div class="px-4 py-2 bg-slate-900/20 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
               <div class="flex items-center gap-3">
@@ -308,6 +421,8 @@
                 </span>
                 <span class="text-slate-600">|</span>
                 <span x-text="currentVariables.length + ' variabel dinamis terdeteksi'"></span>
+                <span class="text-slate-600">|</span>
+                <span class="text-slate-400 font-medium">Standar: ISO/IEC 27037 & RFC 3161</span>
               </div>
               <div class="flex items-center gap-3 font-mono">
                 <span x-text="(currentPrompt.template ? currentPrompt.template.length : 0) + ' karakter'"></span>
@@ -326,11 +441,13 @@
               <!-- Quick Helper Bar under Textarea -->
               <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span>Sisip Cepat:</span>
+                  <span class="font-medium text-slate-400">Sisip Cepat:</span>
                   <button @click="insertVariableSnippet('case_id')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{case_id}}</button>
                   <button @click="insertVariableSnippet('telegram_target')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{telegram_target}}</button>
                   <button @click="insertVariableSnippet('x_ad_target')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{x_ad_target}}</button>
-                  <button @click="insertVariableSnippet('officer_callsign')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{officer_callsign}}</button>
+                  <button @click="insertVariableSnippet('sha256_manifest')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{sha256_manifest}}</button>
+                  <button @click="insertVariableSnippet('stopncii_case_id')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{stopncii_case_id}}</button>
+                  <button @click="insertVariableSnippet('encryption_key_id')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{encryption_key_id}}</button>
                 </div>
                 <div class="flex items-center gap-2">
                   <input 
@@ -459,9 +576,9 @@
             <div>
               <h2 class="text-xs font-semibold text-white flex items-center gap-2">
                 <i data-lucide="workflow" class="w-4 h-4 text-indigo-400"></i>
-                Pipeline Investigasi Bertahap (Tahap 1 s.d. 4)
+                Pipeline Investigasi Bertahap (Tahap 1 s.d. 4 & Nano Fokus)
               </h2>
-              <p class="text-[11px] text-slate-400">Menjalankan alur berantai: Infrastruktur Lab & Hash $\rightarrow$ Analisa Jejak $\rightarrow$ Pelaporan Takedown $\rightarrow$ Final Work Report.</p>
+              <p class="text-[11px] text-slate-400">Menjalankan alur berantai terpadu: Infrastruktur Sandbox $\rightarrow$ Analisa Jejak $\rightarrow$ Pelaporan Takedown $\rightarrow$ Final Work Report.</p>
             </div>
             <div class="flex items-center gap-2">
               <button 
@@ -514,14 +631,14 @@
                 <!-- Template Selector -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Pilih Modul Prompt</label>
+                    <label class="block text-[11px] text-slate-400 mb-1">Pilih Modul Prompt (Master / Sub / Micro / Nano)</label>
                     <select 
                       x-model="step.promptId" 
                       @change="onStepPromptChange(step)"
                       class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
                       <option value="">-- Pilih Prompt Investigasi --</option>
                       <template x-for="p in prompts" :key="p.id">
-                        <option :value="p.id" x-text="p.title"></option>
+                        <option :value="p.id" x-text="'[' + (p.level || 'MODUL').toUpperCase() + '] ' + p.title"></option>
                       </template>
                     </select>
                   </div>
@@ -611,6 +728,70 @@
 
     </main>
 
+    <!-- Modal: Pecah ke Nano-Prompt / Sub-Fokus Baru -->
+    <div 
+      x-show="showSplitModal" 
+      x-transition 
+      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" 
+      x-cloak>
+      <div 
+        @click.away="showSplitModal = false"
+        class="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full flex flex-col shadow-2xl overflow-hidden">
+        
+        <div class="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+          <div class="flex items-center gap-2">
+            <i data-lucide="git-fork" class="w-4 h-4 text-violet-400"></i>
+            <h3 class="text-xs font-semibold text-white">
+              Pecah Cabang Nano-Prompt (Sub-Fokus Lebih Terarah)
+            </h3>
+          </div>
+          <button @click="showSplitModal = false" class="text-slate-400 hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="p-4 space-y-3">
+          <div class="bg-violet-950/30 border border-violet-900/40 rounded-lg p-2.5 text-xs text-violet-200 flex items-start gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-violet-400 shrink-0 mt-0.5"></i>
+            <p>
+              Memecah prompt induk <strong class="text-white" x-text="currentPrompt ? currentPrompt.title : ''"></strong> menjadi modul Nano turunan yang berfokus pada eksekusi teknis mikro (CLI tunggal, tool spesifik, atau skrip konfigurasi presisi).
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Judul Sub-Fokus (Nano-Prompt)</label>
+            <input 
+              type="text" 
+              x-model="splitForm.title" 
+              placeholder="Contoh: [NANO 1.1.3] Skrip Verifikasi DNS Leak & WebRTC"
+              class="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-violet-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">Instruksi Fokus Khusus (Opsional)</label>
+            <textarea 
+              x-model="splitForm.focusDirective" 
+              rows="3"
+              placeholder="Jelaskan spesifik CLI, opsi argumen, atau format output yang harus diisolasi pada prompt ini..."
+              class="w-full bg-slate-950 border border-slate-800 rounded-md p-2.5 text-xs text-slate-100 font-mono resize-none focus:outline-none focus:border-violet-500"></textarea>
+          </div>
+        </div>
+
+        <div class="p-3 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+          <span class="text-[11px] text-slate-500">Otomatis mewarisi variabel kasus induk.</span>
+          <div class="flex items-center gap-2">
+            <button @click="showSplitModal = false" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition">
+              Batal
+            </button>
+            <button @click="confirmCreateNanoPrompt()" class="px-3 py-1.5 rounded bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-md shadow-violet-600/20 transition flex items-center gap-1.5">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Buat Nano-Prompt</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Version History Modal -->
     <div 
       x-show="showVersionHistory" 
@@ -678,8 +859,11 @@
         variableValues: {},
         searchQuery: '',
         selectedTag: '',
+        selectedLevel: 'all', // 'all', 'master', 'sub', 'micro', 'nano'
         versionNoteInput: '',
         showVersionHistory: false,
+        showSplitModal: false,
+        splitForm: { title: '', focusDirective: '' },
         simulatedResponse: '',
         toast: { show: false, message: '', type: 'success', timer: null },
         
@@ -725,14 +909,111 @@
 
         get filteredPrompts() {
           return this.prompts.filter(p => {
-            const matchesSearch = !this.searchQuery || 
-              (p.title && p.title.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-              (p.template && p.template.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-              (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(this.searchQuery.toLowerCase())));
+            // Level Filter
+            if (this.selectedLevel !== 'all') {
+              if (p.level !== this.selectedLevel) return false;
+            }
 
-            const matchesTag = !this.selectedTag || (Array.isArray(p.tags) && p.tags.includes(this.selectedTag));
-            return matchesSearch && matchesTag;
+            // Tag Filter
+            if (this.selectedTag && (!Array.isArray(p.tags) || !p.tags.includes(this.selectedTag))) {
+              return false;
+            }
+
+            // Search Query
+            if (this.searchQuery) {
+              const q = this.searchQuery.toLowerCase();
+              const matchTitle = p.title && p.title.toLowerCase().includes(q);
+              const matchTpl = p.template && p.template.toLowerCase().includes(q);
+              const matchTags = Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(q));
+              if (!matchTitle && !matchTpl && !matchTags) return false;
+            }
+
+            return true;
           });
+        },
+
+        get parentPromptTitle() {
+          if (!this.currentPrompt || !this.currentPrompt.parentId) return '';
+          const parent = this.prompts.find(p => p.id === this.currentPrompt.parentId);
+          return parent ? parent.title : '';
+        },
+
+        get childPrompts() {
+          if (!this.currentPrompt) return [];
+          return this.prompts.filter(p => p.parentId === this.currentPrompt.id);
+        },
+
+        jumpToParent(targetLevel) {
+          if (targetLevel === 'master') {
+            const master = this.prompts.find(p => p.level === 'master');
+            if (master) this.selectPrompt(master.id);
+          } else if (this.currentPrompt && this.currentPrompt.parentId) {
+            this.selectPrompt(this.currentPrompt.parentId);
+          }
+        },
+
+        openSplitModal() {
+          if (!this.currentPrompt) return;
+          const currTitle = this.currentPrompt.title || 'Modul';
+          const cleanTitle = currTitle.replace(/\[(MASTER|SUB-PROMPT|MICRO|NANO)[^\]]*\]/gi, '').trim();
+          
+          this.splitForm.title = `[NANO] Fokus Teknis: ${cleanTitle}`;
+          this.splitForm.focusDirective = `Perdalam aktivitas teknis "${cleanTitle}" dengan perintah CLI, konfigurasi spesifik, dan verifikasi hash independen.`;
+          this.showSplitModal = true;
+          this.renderIcons();
+        },
+
+        confirmCreateNanoPrompt() {
+          if (!this.splitForm.title.trim()) {
+            this.showToastMessage('Judul Nano-Prompt wajib diisi', 'error');
+            return;
+          }
+
+          const newId = 'nano_' + Date.now();
+          const parentTags = this.currentPrompt && Array.isArray(this.currentPrompt.tags) ? [...this.currentPrompt.tags] : [];
+          if (!parentTags.includes('Nano')) parentTags.push('Nano');
+          if (!parentTags.includes('Fokus')) parentTags.push('Fokus');
+
+          const newNano = {
+            id: newId,
+            level: 'nano',
+            parentId: this.currentPrompt ? this.currentPrompt.id : null,
+            title: this.splitForm.title.trim(),
+            tags: parentTags,
+            template: `Konteks Induk: ${this.currentPrompt ? this.currentPrompt.title : 'Investigasi Siber'} (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+Cabang Fokus: ${this.splitForm.title.trim()}
+
+ARAHAN KHUSUS SUB-FOKUS:
+${this.splitForm.focusDirective.trim()}
+
+LANGKAH TEKNIS OPERASIONAL:
+1. Eksekusi Command Line (CLI) & Konfigurasi Presisi:
+   - Tool target: {{target_cli_tool}}
+   - Parameter input: {{target_input_param}}
+2. Integritas Bukti & Logging:
+   - Standard: ISO/IEC 27037 & RFC 3161
+   - Kalkulasi Hash: sha256sum {{artefact_path}} >> {{sha256_manifest}}`,
+            versions: [
+              {
+                timestamp: Date.now(),
+                template: `Konteks Induk: ${this.currentPrompt ? this.currentPrompt.title : 'Investigasi Siber'}`,
+                note: 'Inisialisasi pemecahan sub-fokus (Nano-Prompt)'
+              }
+            ]
+          };
+
+          // Insert right after current prompt or at start
+          const currIdx = this.prompts.findIndex(p => p.id === this.currentPrompt.id);
+          if (currIdx !== -1) {
+            this.prompts.splice(currIdx + 1, 0, newNano);
+          } else {
+            this.prompts.unshift(newNano);
+          }
+
+          this.savePrompts();
+          this.showSplitModal = false;
+          this.selectPrompt(newId);
+          this.showToastMessage('Berhasil membuat Nano-Prompt fokus baru!');
         },
 
         get resolvedPrompt() {
@@ -758,7 +1039,7 @@
         },
 
         loadPrompts() {
-          const storageKey = 'promptcraft_cybercrime_prompts_v2';
+          const storageKey = 'promptcraft_cybercrime_prompts_v3_hierarchical';
           const stored = localStorage.getItem(storageKey);
           if (stored) {
             try {
@@ -778,7 +1059,7 @@
         },
 
         savePrompts() {
-          localStorage.setItem('promptcraft_cybercrime_prompts_v2', JSON.stringify(this.prompts));
+          localStorage.setItem('promptcraft_cybercrime_prompts_v3_hierarchical', JSON.stringify(this.prompts));
         },
 
         selectPrompt(id) {
@@ -800,7 +1081,7 @@
           const vars = this.getVariableNames(this.currentPrompt.template);
           this.currentVariables = vars;
           
-          // Pre-populate sensible forensic test defaults for common variables if not set
+          // Realistic forensic sample defaults
           const forensicDefaults = {
             case_id: 'CCU-NCII-2026-0987',
             telegram_target: 't.me/priv_leak_vip_channel',
@@ -813,7 +1094,9 @@
             stopncii_case_id: 'SN-8842-9901-ID',
             x_post_id: '1839201948572019',
             report_timestamp: '2026-09-27T14:30:00Z',
-            investigation_unit_key: 'cybercrime-unit@polri.go.id'
+            investigation_unit_key: 'cybercrime-unit@polri.go.id',
+            sha256_manifest: '/evidence/CCU-NCII-2026-0987/03_hashes/hash_manifest.txt',
+            kominfo_ticket_id: 'ADUAN-KOMINFO-2026-8891'
           };
 
           vars.forEach(v => {
@@ -844,13 +1127,15 @@
           const newId = 'micro_custom_' + Date.now();
           const newPrompt = {
             id: newId,
-            title: '[MICRO] Instruksi Teknis Tambahan',
+            level: 'micro',
+            parentId: 'master_cyber_investigation',
+            title: '[MICRO] Modul Aktivitas Teknis Baru',
             tags: ['Micro', 'Investigasi', 'Custom'],
-            template: 'Konteks: Penanganan Kasus {{case_id}} oleh Petugas {{officer_callsign}}.\nTarget: {{target_entity}}\n\nInstruksikan prosedur teknis operasional berikut:\n1. Eksekusi CLI langkah demi langkah.\n2. Verifikasi hash SHA-256 terhadap artefak bukti.',
+            template: `Konteks: Penanganan Kasus {{case_id}} oleh Petugas {{officer_callsign}}.\nTarget: {{telegram_target}}\nStandard Forensik: ISO/IEC 27037 & RFC 3161\n\nInstruksikan prosedur teknis operasional berikut:\n1. Eksekusi CLI investigasi langkah demi langkah.\n2. Verifikasi hash SHA-256 terhadap artefak bukti.`,
             versions: [
               {
                 timestamp: Date.now(),
-                template: 'Konteks: Penanganan Kasus {{case_id}} oleh Petugas {{officer_callsign}}.\nTarget: {{target_entity}}\n\nInstruksikan prosedur teknis operasional berikut:\n1. Eksekusi CLI langkah demi langkah.\n2. Verifikasi hash SHA-256 terhadap artefak bukti.',
+                template: 'Inisialisasi prompt',
                 note: 'Inisialisasi prompt'
               }
             ]
@@ -934,13 +1219,17 @@
           const caseRef = this.variableValues['case_id'] || 'CCU-CASE-CURRENT';
           const officer = this.variableValues['officer_callsign'] || 'Investigator-In-Charge';
           
-          this.simulatedResponse = `[SIMULASI RESPON ENGINE FORENSIK]
+          this.simulatedResponse = `[SIMULASI RESPON ENGINE FORENSIK DIGITAL]
 Status Kasus: ${caseRef} | Operator: ${officer}
--------------------------------------------------------------
-1. Validasi OPSEC: Sandbox terisolasi (Tor routing aktif, DNS leak = 0).
-2. Artefak Ingested: 14 tangkapan layar, 3 video stream, 1 manifest hash.
+Standar Kepatuhan: ISO/IEC 27037 & RFC 3161 Trusted Timestamping
+----------------------------------------------------------------------------------
+1. Validasi OPSEC: Sandbox terisolasi (Tor routing aktif, DNS leak = 0, User-Agent randomized).
+2. Artefak Ingested: 14 tangkapan layar, 3 video stream, 1 manifest hash SHA-256.
 3. Cryptographic Signature: SHA-256 terverifikasi pada chain of custody.
-4. Takedown Status: Tiket StopNCII terbit, laporan abuse Telegram/X terkirim.`;
+4. Takedown Actions: 
+   - Token StopNCII (PDQ Hash): ${this.variableValues['stopncii_case_id'] || 'SN-8842-9901-ID'}
+   - Tiket Aduankonten Kominfo: ${this.variableValues['kominfo_ticket_id'] || 'ADUAN-KOMINFO-2026-8891'}
+   - Tiket Eskalasi Telegram Abuse: Registered under Priority Law Enforcement Queue.`;
           this.renderIcons();
         },
 
@@ -948,11 +1237,11 @@ Status Kasus: ${caseRef} | Operator: ${officer}
           const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.prompts, null, 2));
           const dlAnchor = document.createElement('a');
           dlAnchor.setAttribute('href', dataStr);
-          dlAnchor.setAttribute('download', 'cybercrime_prompt_backup_' + new Date().toISOString().slice(0,10) + '.json');
+          dlAnchor.setAttribute('download', 'cybercrime_prompt_hierarchy_backup_' + new Date().toISOString().slice(0,10) + '.json');
           document.body.appendChild(dlAnchor);
           dlAnchor.click();
           dlAnchor.remove();
-          this.showToastMessage('Backup JSON berhasil diunduh');
+          this.showToastMessage('Backup JSON hierarki berhasil diunduh');
         },
 
         importJson(event) {
@@ -985,7 +1274,7 @@ Status Kasus: ${caseRef} | Operator: ${officer}
             return;
           }
 
-          const headers = ['Title', 'Tags', 'Template', 'ID'];
+          const headers = ['Level', 'Title', 'Parent_ID', 'Tags', 'Template', 'ID'];
           
           const escapeCsvCell = (val) => {
             if (val === null || val === undefined) return '""';
@@ -1001,7 +1290,9 @@ Status Kasus: ${caseRef} | Operator: ${officer}
           this.prompts.forEach(p => {
             const tagsStr = Array.isArray(p.tags) ? p.tags.join('; ') : '';
             const row = [
+              escapeCsvCell(p.level || 'micro'),
               escapeCsvCell(p.title || 'Untitled Prompt'),
+              escapeCsvCell(p.parentId || ''),
               escapeCsvCell(tagsStr),
               escapeCsvCell(p.template || ''),
               escapeCsvCell(p.id || '')
@@ -1014,7 +1305,7 @@ Status Kasus: ${caseRef} | Operator: ${officer}
           const url = URL.createObjectURL(blob);
           const dlAnchor = document.createElement('a');
           dlAnchor.setAttribute('href', url);
-          dlAnchor.setAttribute('download', 'cybercrime_prompts_' + new Date().toISOString().slice(0, 10) + '.csv');
+          dlAnchor.setAttribute('download', 'cybercrime_prompts_hierarchy_' + new Date().toISOString().slice(0, 10) + '.csv');
           document.body.appendChild(dlAnchor);
           dlAnchor.click();
           dlAnchor.remove();
@@ -1092,9 +1383,11 @@ Status Kasus: ${caseRef} | Operator: ${officer}
               }
 
               let headerRow = parsedRows[0].map(h => h.trim().toLowerCase());
+              let levelCol = headerRow.findIndex(h => h.includes('level') || h.includes('tingkat'));
               let titleCol = headerRow.findIndex(h => h.includes('title') || h.includes('judul') || h.includes('name'));
-              let tagsCol = headerRow.findIndex(h => h.includes('tag') || h.includes('label') || h.includes('kategori'));
-              let templateCol = headerRow.findIndex(h => h.includes('template') || h.includes('prompt') || h.includes('content') || h.includes('text') || h.includes('isi'));
+              let parentCol = headerRow.findIndex(h => h.includes('parent'));
+              let tagsCol = headerRow.findIndex(h => h.includes('tag') || h.includes('label'));
+              let templateCol = headerRow.findIndex(h => h.includes('template') || h.includes('prompt') || h.includes('content') || h.includes('isi'));
               let idCol = headerRow.findIndex(h => h === 'id' || h.endsWith('_id'));
 
               let startIndex = 1;
@@ -1120,10 +1413,18 @@ Status Kasus: ${caseRef} | Operator: ${officer}
                 if (tagsCol >= 0 && row[tagsCol]) {
                   tags = row[tagsCol].split(/[;,|]/).map(t => t.trim().replace(/^#/, '')).filter(t => t.length > 0);
                 }
-                if (tags.length === 0) {
-                  tags = ['imported'];
+                if (tags.length === 0) tags = ['imported'];
+
+                let level = 'micro';
+                if (levelCol >= 0 && row[levelCol]) {
+                  level = row[levelCol].trim().toLowerCase();
+                } else {
+                  if (title.includes('[MASTER]')) level = 'master';
+                  else if (title.includes('[SUB-PROMPT')) level = 'sub';
+                  else if (title.includes('[NANO')) level = 'nano';
                 }
 
+                const parentId = (parentCol >= 0 && row[parentCol]) ? row[parentCol].trim() : null;
                 const promptId = (idCol >= 0 && row[idCol] && row[idCol].trim()) 
                   ? row[idCol].trim() 
                   : ('prompt_csv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
@@ -1131,6 +1432,8 @@ Status Kasus: ${caseRef} | Operator: ${officer}
                 if (title || template) {
                   newPrompts.push({
                     id: promptId,
+                    level: level,
+                    parentId: parentId,
                     title: title,
                     tags: tags,
                     template: template,
@@ -1169,7 +1472,7 @@ Status Kasus: ${caseRef} | Operator: ${officer}
           if (this.prompts.length > 0) {
             this.selectPrompt(this.prompts[0].id);
           }
-          this.showToastMessage('Modul resmi cybercrime berhasil dipulihkan');
+          this.showToastMessage('Modul resmi cybercrime hierarkis berhasil dipulihkan');
         },
 
         formatDate(ts) {
@@ -1179,7 +1482,7 @@ Status Kasus: ${caseRef} | Operator: ${officer}
 
         // --- Chaining Engine Methods ---
         loadChain() {
-          const stored = localStorage.getItem('promptcraft_cybercrime_chain_v2');
+          const stored = localStorage.getItem('promptcraft_cybercrime_chain_v3_hierarchical');
           if (stored) {
             try {
               this.chainSteps = JSON.parse(stored);
@@ -1193,7 +1496,7 @@ Status Kasus: ${caseRef} | Operator: ${officer}
         },
 
         saveChain() {
-          localStorage.setItem('promptcraft_cybercrime_chain_v2', JSON.stringify(this.chainSteps));
+          localStorage.setItem('promptcraft_cybercrime_chain_v3_hierarchical', JSON.stringify(this.chainSteps));
         },
 
         addChainStep() {
@@ -1273,9 +1576,10 @@ Status Kasus: ${caseRef} | Operator: ${officer}
             await new Promise(r => setTimeout(r, 650));
 
             const simulatedOutput = `[FASE ${i + 1} TERSELESAIKAN - ${title}]
-Parameter Terkonfigurasi: ${step.variables ? step.variables.length : 0} variabel tervalidasi.
-Integritas Forensik: SHA-256 hashing aktif, sandbox routing aman.
-Ringkasan Artefak: Bukti digital tersinkronisasi untuk pelaporan takedown & work report.`;
+Standar Kepatuhan: ISO/IEC 27037 & RFC 3161 Timestamping.
+Parameter Injeksi: ${step.variables ? step.variables.length : 0} variabel tervalidasi.
+Integritas Forensik: SHA-256 manifest tersimpan, proxychains isolation terverifikasi.
+Output Takedown/Artefak: Siap dilampirkan ke BAP dan sistem takedown StopNCII / Kominfo / Telegram.`;
             previousOutput = simulatedOutput;
 
             this.chainExecutionResults.push({
@@ -1303,50 +1607,66 @@ Ringkasan Artefak: Bukti digital tersinkronisasi untuk pelaporan takedown & work
 
         getDefaultPrompts() {
           return [
+            // ================= 1. MASTER PROMPT =================
             {
               id: 'master_cyber_investigation',
+              level: 'master',
+              parentId: null,
               title: '[MASTER] Framework Instruksi Pelatihan Investigasi Cybercrime & NCII Takedown',
-              tags: ['Master', 'Framework', 'Cybercrime', 'NCII', 'Telegram', 'OSINT'],
-              template: `Anda adalah seorang Senior Lead Cybercrime Investigator & Instructional Designer Forensik Digital resmi. Konteks tugas Anda adalah memandu dan menyusun modul teknis investigasi kejahatan siber berintensitas tinggi, berfokus khusus pada penanganan kejahatan Doxing dan Non-Consensual Intimate Imagery (NCII) yang disebarkan melalui ekosistem channel/grup Telegram dan dipromosikan melalui postingan iklan di X.com (Twitter).
+              tags: ['Master', 'Framework', 'Cybercrime', 'NCII', 'ISO-27037', 'Telegram', 'OSINT'],
+              template: `**[CONTEXT & AUTHORIZED SCOPE]**
+Anda bertindak sebagai Lead Instructional Designer & Senior Forensic Cybercrime Investigator. 
+Saya adalah Instruktur Resmi Lembaga Penegak Hukum Siber Negara. 
+Instruksi ini diberikan dalam lingkup kedinasan resmi dan advokasi hukum yang sah (Authorized Law Enforcement & Victim Protection Mandate) untuk menyusun modul pelatihan teknis investigasi tingkat tinggi bagi penyidik siber dan personil teknis NGO pendamping korban kejahatan internet.
 
-OPERATIONAL DIRECTIVES:
-1. Target Peserta: Tenaga teknis cybercrime resmi negara dan personil teknis advokasi NGO perlindungan perempuan yang telah terikat wewenang operasional resmi.
-2. Fokus Instruksional: Murni TECHNICAL HANDLING. Berikan perintah CLI (Command Line Interface), skrip otomasi Bash/Python, konfigurasi environment sandbox, metodologi OSINT, ekstraksi metadata, perhitungan cryptographic hash, dan format template pelaporan takedown teknis.
-3. Batasan Mutlak: ABAIKAN pembahasan retorika hukum normatif, konseling psikologis, maupun perdebatan privasi umum. Seluruh instruksi harus actionable, terstruktur, presisi langkah-demi-langkah (step-by-step), dan berorientasi hasil pembuktian forensik.
-4. Parameter Kasus Saat Ini:
+Fokus Modul:
+Penanganan teknis kejahatan Doxing dan Non-Consensual Intimate Imagery (NCII) pada grup/channel Telegram serta penelusuran postingan iklan distribusinya di platform X.com (Twitter).
+
+**[STRICT OPERATIONAL DIRECTIVES]**
+1. Murni Technical Handling: Berikan instruksi berbasis Command Line Interface (CLI), script Bash/Python, konfigurasi environment sandbox, metodologi OSINT pasif, analisis metadata, cryptographic hashing, dan API/email takedown formatting.
+2. Standard Forensik Internasional Wajib: Wajib mematuhi standar ISO/IEC 27037 (Digital Evidence Handling) dan RFC 3161 (Cryptographic Trusted Timestamping).
+3. Eksklusi Mutlak: Abaikan pembahasan teori hukum umum, sosiologi, psikologi korban, atau perdebatan privasi normatif. Seluruh peserta adalah aparat dan pendamping bersumpah.
+4. Non-Interference / Pure Forensics: Hindari interaksi provokatif dengan pelaku di grup; fokus pada preservasi bukti non-repudiation, atribusi digital, dan pemutusan akses (takedown).
+5. State Passing Parameter Kasus:
    - Kasus ID: {{case_id}}
    - Target Telegram Entity: {{telegram_target}} (ID/Link/Group/Channel)
    - Akun/Post Iklan X.com: {{x_ad_target}}
    - Tanggal Investigasi: {{investigation_date}}
    - Petugas Pelaksana: {{officer_callsign}}
 
-Saat mengeksekusi instruksi turunan di setiap tahapan, Anda wajib mempertahankan ketat integritas chain of custody, prinsip isolasi sandbox, dan format artefak digital standar forensik internasional (ISO/IEC 27037).`,
+Saat mengeksekusi modul turunan (Sub-Prompt, Micro-Prompt, dan Nano-Prompt), pertahankan rantai bukti (chain of custody) dan format artefak digital standar forensik.`,
               versions: [
                 {
                   timestamp: Date.now() - 86400000,
-                  template: 'Master framework prompt investigasi cybercrime & NCII resmi.',
+                  template: 'Master framework prompt resmi investigasi cybercrime ISO/IEC 27037.',
                   note: 'Standarisasi awal modul'
                 }
               ]
             },
+
+            // ================= 2. TAHAP 1: PERSAPAN INFRASTRUKTUR =================
             {
               id: 'sub_tahap_1_infrastruktur',
+              level: 'sub',
+              parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 1] Inisiasi Lab Forensik & Sistem Monitoring Deteksi Dini',
-              tags: ['Tahap-1', 'Sub', 'Infrastruktur', 'Kali-Linux', 'Monitoring'],
+              tags: ['Tahap-1', 'Sub', 'Infrastruktur', 'Kali-Linux', 'Monitoring', 'OPSEC'],
               template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Operator: {{officer_callsign}}):
 Inisiasi Tahap 1: Persiapan Infrastruktur Lab Forensik dan Sistem Deteksi Dini.
 
 Tujuan:
-Membangun lingkungan kerja virtual yang aman (VirtualBox di Windows 11 host), terisolasi dari kebocoran jejak (anti-leak OPSEC), dan siap menjalankan monitoring preventif terhadap aktivitas doxing/NCII di Telegram dan X.com.
+Membangun lingkungan kerja virtual yang aman (VirtualBox di Windows 11 host), terisolasi dari kebocoran jejak (anti-leak OPSEC & non-attributable network), dan siap menjalankan monitoring preventif terhadap aktivitas doxing/NCII di Telegram dan X.com.
 
 Instruksikan modul ini dengan rincian teknis operasional:
 1. Arsitektur isolasi jaringan (Host-Only / NAT Network + Tor/VPN chained proxy).
 2. Mekanisme crawling pasif tanpa interaksi aktif (non-attributable passive monitoring).
-3. Struktur baku direktori penyimpan artefak forensik dengan hashing otomatis saat ingest data.`,
+3. Struktur baku direktori penyimpan artefak forensik dengan hashing otomatis ISO/IEC 27037 saat ingest data.`,
               versions: []
             },
             {
               id: 'micro_1_1_kali_setup',
+              level: 'micro',
+              parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.1] Setup & Konfigurasi Kali Linux Sandbox (VirtualBox on Win11)',
               tags: ['Tahap-1', 'Micro', 'Infrastruktur', 'Kali-Linux', 'Tutorial'],
               template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
@@ -1366,7 +1686,49 @@ Berikan modul teknis tutorial dan konfigurasi CLI lengkap:
               versions: []
             },
             {
+              id: 'nano_1_1_1_sandbox_hardening',
+              level: 'nano',
+              parentId: 'micro_1_1_kali_setup',
+              title: '[NANO 1.1.1] Hardening Jaringan VM Kali & Anti-Leak (Tor, Proxychains, DNS Audit)',
+              tags: ['Tahap-1', 'Nano', 'Kali-Linux', 'OPSEC', 'Proxychains'],
+              template: `Konteks: Micro 1.1 Setup Sandbox (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+Cabang Fokus: Konfigurasi Hardening Jaringan & Audit Kebocoran Identitas (Anti-Leak OPSEC).
+
+Berikan instruksi CLI spesifik:
+1. Konfigurasi /etc/proxychains4.conf:
+   - Pengaturan dynamic_chain, proxy_dns, dan penambahan SOCKS5 127.0.0.1 9050 (Tor Daemon).
+2. Otomasi Servis Tor:
+   - systemctl enable --now tor
+   - Verifikasi status proxy: curl --socks5-hostname 127.0.0.1:9050 https://check.torproject.org/api/ip
+3. Skrip Tes Kebocoran DNS & WebRTC:
+   - Perintah validasi CLI untuk memastikan query DNS internal ISP tidak bocor keluar.`,
+              versions: []
+            },
+            {
+              id: 'nano_1_1_2_osint_tools',
+              level: 'nano',
+              parentId: 'micro_1_1_kali_setup',
+              title: '[NANO 1.1.2] Toolkit OSINT Forensik & Isolasi Virtualenv CLI (Telethon & Scrapers)',
+              tags: ['Tahap-1', 'Nano', 'Kali-Linux', 'Python', 'Virtualenv'],
+              template: `Konteks: Micro 1.1 Setup Sandbox (Kasus: {{case_id}})
+Cabang Fokus: Pembuatan Virtual Environment Python Forensik Terisolasi.
+
+Tuliskan skrip instalasi Bash mandiri (setup_env.sh):
+1. Membuat direktori: /opt/forensic_env/{{venv_name}}
+2. Inisialisasi: python3 -m venv /opt/forensic_env/{{venv_name}}
+3. Instalasi paket pip dengan pinning versi:
+   - telethon==1.36.0
+   - twscrape==0.11.0
+   - Pillow>=10.0.0
+   - requests[socks]
+   - piexif
+4. Validasi impor script untuk menguji Telethon tanpa konflik library OS.`,
+              versions: []
+            },
+            {
               id: 'micro_1_2_monitoring_system',
+              level: 'micro',
+              parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.2] Sistem Monitoring Deteksi Dini (Anti-Cloning, Anti-Reupload, Anti-Repost)',
               tags: ['Tahap-1', 'Micro', 'Monitoring', 'Telegram', 'X-Twitter', 'Skrip'],
               template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Target: {{telegram_target}})
@@ -1385,12 +1747,14 @@ Susun modul teknis konfigurasi monitoring otomatis:
             },
             {
               id: 'micro_1_3_directory_custody',
+              level: 'micro',
+              parentId: 'sub_tahap_1_infrastruktur',
               title: '[MICRO 1.3] Standardisasi Direktori & Manajemen Chain of Custody Bukti Digital',
-              tags: ['Tahap-1', 'Micro', 'Forensik', 'Chain-of-Custody', 'Template'],
+              tags: ['Tahap-1', 'Micro', 'Forensik', 'Chain-of-Custody', 'ISO-27037'],
               template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}})
-Aktivitas: Standardisasi Template Direktori & Chain of Custody Digital.
+Aktivitas: Standardisasi Template Direktori & Chain of Custody Digital ISO/IEC 27037.
 
-Rancang skrip Bash struktur penyimpanan bukti digital berstandar ISO/IEC 27037:
+Rancang skrip Bash struktur penyimpanan bukti digital berstandar internasional:
 1. Hirarki Folder Kasus:
    /evidence/{{case_id}}/
    ├── 01_raw_capture/ (Media asli, raw stream, PCAP, screenshot ber-timestamp)
@@ -1400,11 +1764,34 @@ Rancang skrip Bash struktur penyimpanan bukti digital berstandar ISO/IEC 27037:
 2. Skrip otomatisasi penamaan file (File Naming Convention):
    Format: [TIMESTAMP_UTC]_[PLATFORM]_[TARGET_ID]_[ARTEFACT_TYPE].ext
 3. Skrip Bash auto_hasher.sh:
-   Menghitung SHA-256 secara langsung pada setiap file baru yang masuk ke 01_raw_capture/, mengunci izin berkas menjadi Read-Only (chmod 444), dan menuliskan ke hash_manifest.txt.`,
+   Menghitung SHA-256 secara langsung pada setiap file baru yang masuk ke 01_raw_capture/, mengunci izin berkas menjadi Read-Only (chmod 444), dan menuliskan ke {{sha256_manifest}}.`,
               versions: []
             },
             {
+              id: 'nano_1_3_1_auto_hasher',
+              level: 'nano',
+              parentId: 'micro_1_3_directory_custody',
+              title: '[NANO 1.3.1] Automasi auto_hasher.sh & Manifest Cryptographic ISO/IEC 27037',
+              tags: ['Tahap-1', 'Nano', 'Forensik', 'Bash', 'Hashing'],
+              template: `Konteks: Micro 1.3 Direktori & Custody (Kasus: {{case_id}})
+Cabang Fokus: Skrip Daemon/Inotify Automasi Hashing File Masuk.
+
+Tuliskan skrip Bash lengkap auto_hasher.sh yang:
+1. Memantau folder /evidence/{{case_id}}/01_raw_capture/ menggunakan inotifywait atau loop periodic.
+2. Ketika file baru selesai ditulis:
+   - Hitung SHA-256 dan SHA-512.
+   - Ambil timestamp UTC presisi milidetik.
+   - Catat format tab-separated ke: {{sha256_manifest}}
+     Format: [TIMESTAMP_UTC]\t[FILE_NAME]\t[SIZE_BYTES]\t[SHA256]\t[SHA512]\t[OFFICER:{{officer_callsign}}]
+   - Ubah izin file menjadi read-only: chmod 444 "$file"`,
+              versions: []
+            },
+
+            // ================= 3. TAHAP 2: EKSEKUSI INVESTIGASI =================
+            {
               id: 'sub_tahap_2_investigasi',
+              level: 'sub',
+              parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 2] Inisiasi Eksekusi Investigasi Forensik & Analisis Data Digital',
               tags: ['Tahap-2', 'Sub', 'Investigasi', 'OSINT', 'Forensik'],
               template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Target: {{telegram_target}}):
@@ -1421,6 +1808,8 @@ Instruksikan modul ini dengan fokus:
             },
             {
               id: 'micro_2_1_tool_analysis',
+              level: 'micro',
+              parentId: 'sub_tahap_2_investigasi',
               title: '[MICRO 2.1] Tutorial Tool Kali Linux: Analisa Data Telegram & X.com',
               tags: ['Tahap-2', 'Micro', 'Kali-Linux', 'Telegram', 'X-Twitter', 'Tutorial'],
               template: `Konteks: Tahap 2 - Eksekusi Investigasi (Kasus: {{case_id}} | Target Iklan X: {{x_ad_target}})
@@ -1440,11 +1829,51 @@ Susun modul teknis praktis (hands-on) untuk investigator:
               versions: []
             },
             {
+              id: 'nano_2_1_1_x_archival',
+              level: 'nano',
+              parentId: 'micro_2_1_tool_analysis',
+              title: '[NANO 2.1.1] Unshortening t.co & Preservasi Headless DOM Snapshot Iklan X.com',
+              tags: ['Tahap-2', 'Nano', 'X-Twitter', 'OSINT', 'CLI'],
+              template: `Konteks: Micro 2.1 Analisa Data (Kasus: {{case_id}} | Akun: {{x_ad_target}})
+Cabang Fokus: Prosedur Penguraian Link & Preservasi Web X.com.
+
+Instruksikan perintah CLI operasional:
+1. Ekstraksi Canonical Redirection:
+   - curl -sIL -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" "https://x.com/target_post" | grep -Ei "^(HTTP|location:)"
+   - Catat seluruh chain hop redirect hingga mencapai invite link Telegram.
+2. Offline Archival Web Lengkap (SingleFile / Monolith):
+   - monolith "https://x.com/target_post" -o /evidence/{{case_id}}/01_raw_capture/x_snapshot.html
+3. Hashing instan dan simpan header HTTP response ke direktori metadata.`,
+              versions: []
+            },
+            {
+              id: 'nano_2_1_2_telegram_provenance',
+              level: 'nano',
+              parentId: 'micro_2_1_tool_analysis',
+              title: '[NANO 2.1.2] Ekstraksi Provenance Forward Telegram & Origin Peer ID',
+              tags: ['Tahap-2', 'Nano', 'Telegram', 'Telethon', 'Forensik'],
+              template: `Konteks: Micro 2.1 Analisa Data (Kasus: {{case_id}} | Target: {{telegram_target}})
+Cabang Fokus: Pelacakan Asal Usul Pesan Terusan (Message Forward Provenance).
+
+Tuliskan modul skrip Python Telethon:
+1. Autentikasi sesi riset aman (via proxy SOCKS5).
+2. Mengambil pesan dari channel {{telegram_target}}:
+   - Periksa message.fwd_from:
+     * from_id (User ID penyebar pertama)
+     * from_name
+     * channel_post / channel_id (Channel sumber asli bocoran)
+     * date (Timestamp asli penerbitan pertama)
+3. Ekstraksi dokumen/foto: simpan media document ID numerik tanpa menampilkan konten grafis ke layar.`,
+              versions: []
+            },
+            {
               id: 'micro_2_2_data_collection',
+              level: 'micro',
+              parentId: 'sub_tahap_2_investigasi',
               title: '[MICRO 2.2] Prosedur Pengumpulan & Hashing Bukti Digital untuk Pelaporan',
               tags: ['Tahap-2', 'Micro', 'Forensik', 'Hashing', 'Koleksi-Data'],
               template: `Konteks: Tahap 2 - Eksekusi Investigasi (Kasus: {{case_id}} | Enkripsi: {{encryption_key_id}})
-Aktivitas: Standar Operasional Pengumpulan Bukti Digital & Non-Repudiation Hashing.
+Aktivitas: Standar Operasional Pengumpulan Bukti Digital & Non-Repudiation Hashing ISO/IEC 27037.
 
 Berikan SOP teknis pengumpulan data bukti digital:
 1. Standarisasi Tangkapan Layar Forensik:
@@ -1457,8 +1886,12 @@ Berikan SOP teknis pengumpulan data bukti digital:
    Format tabel log bukti yang mencakup: Evidence No, Timestamp, Source URL/ID, File Name, SHA-256 Checksum, File Size (bytes), Investigator Callsign.`,
               versions: []
             },
+
+            // ================= 4. TAHAP 3: REPORTING & TAKEDOWN =================
             {
               id: 'sub_tahap_3_takedown',
+              level: 'sub',
+              parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 3] Inisiasi Alur Takedown Multi-Platform & Koordinasi Lembaga',
               tags: ['Tahap-3', 'Sub', 'Takedown', 'Reporting', 'Kominfo', 'StopNCII'],
               template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Target: {{telegram_target}}):
@@ -1469,13 +1902,15 @@ Melakukan tindakan pemutusan akses (takedown), pembekuan akun/channel penyebar, 
 
 Instruksikan modul ini dengan fokus:
 1. Pemetaan eskalasi kanal teknis pelaporan resmi (bukan laporan publik biasa).
-2. Prosedur pembuatan perceptual hash (pHash/MD5) untuk proteksi proaktif melalui StopNCII.org.
+2. Prosedur pembuatan perceptual hash (pHash/PDQ) untuk proteksi proaktif melalui StopNCII.org.
 3. Formulasi laporan aduan konten Kominfo (aduankonten.id) dengan argumen teknis forensik.
 4. Laporan pelanggaran Terms of Service (ToS) & Abuse ke Telegram Trust & Safety serta X.com Safety Team.`,
               versions: []
             },
             {
               id: 'micro_3_1_workflow_platforms',
+              level: 'micro',
+              parentId: 'sub_tahap_3_takedown',
               title: '[MICRO 3.1] Alur Pelaporan Teknis Spesifik Platform (Telegram, X, stopncii.org, aduankonten.id)',
               tags: ['Tahap-3', 'Micro', 'Takedown', 'Telegram', 'X-Twitter', 'StopNCII', 'Kominfo'],
               template: `Konteks: Tahap 3 - Reporting & Takedown (Kasus: {{case_id}} | StopNCII Ref: {{stopncii_case_id}})
@@ -1497,7 +1932,48 @@ Susun panduan teknis langkah-demi-langkah (actionable checklist):
               versions: []
             },
             {
+              id: 'nano_3_1_1_stopncii_phash',
+              level: 'nano',
+              parentId: 'micro_3_1_workflow_platforms',
+              title: '[NANO 3.1.1] Prosedur StopNCII.org Client-Side Hashing PDQ/pHash Non-Upload',
+              tags: ['Tahap-3', 'Nano', 'StopNCII', 'pHash', 'PDQ'],
+              template: `Konteks: Micro 3.1 Pelaporan Teknis (Kasus: {{case_id}} | StopNCII Case: {{stopncii_case_id}})
+Cabang Fokus: SOP Pembuatan Hash Perseptual (PDQ) di StopNCII.org Tanpa Unggah Media Asli.
+
+Berikan modul teknis SOP untuk petugas investigator/NGO:
+1. Konsep Integritas Perceptual Hashing:
+   - Penjelasan mengapa file gambar asli TIDAK PERNAH dikirim ke server StopNCII (100% diproses di browser klien menggunakan WebAssembly/JS).
+2. Langkah-demi-langkah Pembuatan Case Token:
+   - Mengakses portal resmi stopncii.org.
+   - Memilih kategori media (gambar/video).
+   - Menghasilkan token hash unik: catat PIN dan Case Number {{stopncii_case_id}}.
+3. Penyimpanan Bukti Token:
+   - Simpan receipt JSON ke /evidence/{{case_id}}/04_report_artifacts/stopncii_token.json.`,
+              versions: []
+            },
+            {
+              id: 'nano_3_1_2_telegram_abuse',
+              level: 'nano',
+              parentId: 'micro_3_1_workflow_platforms',
+              title: '[NANO 3.1.2] Eskalasi Resmi Telegram Abuse (@notoscam & Priority Legal Mail)',
+              tags: ['Tahap-3', 'Nano', 'Telegram', 'Takedown', 'Abuse'],
+              template: `Konteks: Micro 3.1 Pelaporan Teknis (Kasus: {{case_id}} | Target: {{telegram_target}})
+Cabang Fokus: Prosedur Pelaporan Prioritas Abuse Telegram.
+
+Instruksikan langkah eskalasi teknis:
+1. Jalur Cepat (Fast Track):
+   - Pelaporan via @notoscam bot dan @SpamBot dengan mencantumkan permanent message ID.
+2. Pengiriman Email Resmi (Official CSIRT/Law Enforcement):
+   - Alamat tujuan: abuse@telegram.org, dmca@telegram.org, stopca@telegram.org.
+   - Lampiran: Berkas metadata JSON dan tangkapan layar ber-hash SHA-256 (jangan lampirkan gambar intim vulgar polos; lampirkan versi disensor dengan hash asli tercatat).
+3. Follow-up Tracking:
+   - Skrip periodic polling untuk mengecek apakah channel target sudah menjadi "This channel is blocked due to violating local laws / copyright".`,
+              versions: []
+            },
+            {
               id: 'micro_3_2_report_templates',
+              level: 'micro',
+              parentId: 'sub_tahap_3_takedown',
               title: '[MICRO 3.2] Template Formulir & Notifikasi Pelaporan Teknis Takedown Cepat',
               tags: ['Tahap-3', 'Micro', 'Template', 'Takedown', 'Format-Report'],
               template: `Konteks: Tahap 3 - Reporting & Takedown (Kasus: {{case_id}} | Post X: {{x_post_id}})
@@ -1514,15 +1990,19 @@ Hasilkan 3 template laporan teknis resmi siap kirim:
    - Format resmi instansi/NGO: Nomor Registrasi Kasus {{case_id}}, deskripsi temuan bukti digital, lampiran hash SHA-256, dan permohonan blokir akses domain/t.me.`,
               versions: []
             },
+
+            // ================= 5. TAHAP 4: DOKUMENTASI AKHIR =================
             {
               id: 'sub_tahap_4_dokumentasi',
+              level: 'sub',
+              parentId: 'master_cyber_investigation',
               title: '[SUB-PROMPT 4] Inisiasi Finalisasi Dokumentasi Kasus & Chain of Custody',
               tags: ['Tahap-4', 'Sub', 'Dokumentasi', 'Chain-of-Custody', 'Work-Report'],
               template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Petugas: {{officer_callsign}}):
 Inisiasi Tahap 4: Dokumentasi Akhir, Laporan Kerja (Work Report), dan Pengarsipan Bukti Sah.
 
 Tujuan:
-Menyusun Laporan Kerja Teknis (Technical Work Report) komprehensif yang siap dipertanggungjawabkan di hadapan instansi penyidik/pengadilan serta mengamankan arsip bukti digital dalam cold storage terverifikasi.
+Menyusun Laporan Kerja Teknis (Technical Work Report) komprehensif yang siap dipertanggungjawabkan di hadapan instansi penyidik/pengadilan serta mengamankan arsip bukti digital dalam cold storage terverifikasi ISO/IEC 27037.
 
 Instruksikan modul ini dengan fokus:
 1. Standardisasi sistematika Technical Incident & Investigation Report.
@@ -1532,6 +2012,8 @@ Instruksikan modul ini dengan fokus:
             },
             {
               id: 'micro_4_1_work_report',
+              level: 'micro',
+              parentId: 'sub_tahap_4_dokumentasi',
               title: '[MICRO 4.1] Penyusunan Laporan Kerja Resmi (Technical Work Report)',
               tags: ['Tahap-4', 'Micro', 'Work-Report', 'Dokumentasi', 'Format-Laporan'],
               template: `Konteks: Tahap 4 - Dokumentasi Akhir (Kasus: {{case_id}} | Waktu: {{report_timestamp}})
@@ -1556,7 +2038,31 @@ Susun template dokumen laporan investigasi teknis berstandar operasional:
               versions: []
             },
             {
+              id: 'nano_4_1_1_timeline_matrix',
+              level: 'nano',
+              parentId: 'micro_4_1_work_report',
+              title: '[NANO 4.1.1] Matriks Kronologi Insiden & Chain of Custody Certificate BAP',
+              tags: ['Tahap-4', 'Nano', 'Timeline', 'Forensik', 'BAP'],
+              template: `Konteks: Micro 4.1 Laporan Kerja (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+Cabang Fokus: Pembuatan Tabel Kronologi Forensik & Sertifikat Rantai Bukti (BAP Lampiran).
+
+Formatkan 2 tabel standar pembuktian:
+1. Tabel Kronologi Forensik (Timeline Matrix):
+   | No | Waktu (UTC) | Platform | Event / Aktivitas | Artefak Bukti | Hash SHA-256 |
+   |----|-------------|----------|-------------------|---------------|--------------|
+   | 1  | 14:10:02    | X.com    | Iklan promosi diposting | x_post_1839.png | e3b0c442... |
+   | 2  | 14:15:20    | Telegram | Media intim diunggah | tg_msg_8819.bin | a591a6d4... |
+
+2. Sertifikat Rantai Bukti Digital (Chain of Custody Certificate):
+   - Tanggal dan Jam Akuisisi
+   - Spesifikasi Perangkat Pemeriksa (Kali VM ID, Host ID)
+   - Tanda Tangan Digital Verifikator & Petugas`,
+              versions: []
+            },
+            {
               id: 'micro_4_2_evidence_archival',
+              level: 'micro',
+              parentId: 'sub_tahap_4_dokumentasi',
               title: '[MICRO 4.2] Prosedur Pengarsipan Bukti Digital Sah & Terverifikasi',
               tags: ['Tahap-4', 'Micro', 'Arsip', 'Forensik', 'Integritas-Data'],
               template: `Konteks: Tahap 4 - Dokumentasi Akhir (Kasus: {{case_id}} | Unit Key: {{investigation_unit_key}})
@@ -1583,48 +2089,43 @@ Rancang SOP teknis dan instruksi CLI pengarsipan digital jangka panjang:
           return [
             {
               id: 'step_1',
-              promptId: 'micro_1_3_directory_custody',
+              promptId: 'nano_1_3_1_auto_hasher',
               sourceMode: 'direct',
-              variables: ['case_id'],
+              variables: ['case_id', 'sha256_manifest', 'officer_callsign'],
               variableValues: {
-                case_id: 'CCU-NCII-2026-0987'
+                case_id: 'CCU-NCII-2026-0987',
+                sha256_manifest: '/evidence/CCU-NCII-2026-0987/03_hashes/hash_manifest.txt',
+                officer_callsign: 'CyberOps-Inspector-04'
               }
             },
             {
               id: 'step_2',
-              promptId: 'micro_2_1_tool_analysis',
+              promptId: 'nano_2_1_1_x_archival',
               sourceMode: 'direct',
-              variables: ['case_id', 'x_ad_target', 'telegram_target'],
+              variables: ['case_id', 'x_ad_target'],
               variableValues: {
                 case_id: 'CCU-NCII-2026-0987',
-                x_ad_target: '@promo_link_tele69',
-                telegram_target: 't.me/priv_leak_vip_channel'
-              }
-            },
-            {
-              id: 'step_3',
-              promptId: 'micro_3_1_workflow_platforms',
-              sourceMode: 'pipe_previous',
-              variables: ['case_id', 'stopncii_case_id', 'telegram_target', 'x_ad_target'],
-              variableValues: {
-                case_id: 'CCU-NCII-2026-0987',
-                stopncii_case_id: 'SN-8842-9901-ID',
-                telegram_target: 't.me/priv_leak_vip_channel',
                 x_ad_target: '@promo_link_tele69'
               }
             },
             {
-              id: 'step_4',
-              promptId: 'micro_4_1_work_report',
+              id: 'step_3',
+              promptId: 'nano_3_1_1_stopncii_phash',
               sourceMode: 'pipe_previous',
-              variables: ['case_id', 'report_timestamp', 'officer_callsign', 'telegram_target', 'x_ad_target', 'stopncii_case_id'],
+              variables: ['case_id', 'stopncii_case_id'],
               variableValues: {
                 case_id: 'CCU-NCII-2026-0987',
-                report_timestamp: '2026-09-27T14:30:00Z',
-                officer_callsign: 'CyberOps-Inspector-04',
-                telegram_target: 't.me/priv_leak_vip_channel',
-                x_ad_target: '@promo_link_tele69',
                 stopncii_case_id: 'SN-8842-9901-ID'
+              }
+            },
+            {
+              id: 'step_4',
+              promptId: 'nano_4_1_1_timeline_matrix',
+              sourceMode: 'pipe_previous',
+              variables: ['case_id', 'officer_callsign'],
+              variableValues: {
+                case_id: 'CCU-NCII-2026-0987',
+                officer_callsign: 'CyberOps-Inspector-04'
               }
             }
           ];
