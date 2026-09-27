@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberCrime & NCII Investigation Workbench</title>
+  <meta name="description" content="Workbench sistem prompt hierarkis dan dinamis untuk pelatihan teknis investigasi cybercrime, penanganan doxing dan NCII di Telegram serta iklan X.com.">
+  <meta property="og:title" content="CyberCrime & NCII Investigation Workbench">
+  <meta property="og:description" content="Sistem prompt teknis forensik cybercrime & takedown NCII Telegram dan X.com.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              950: '#1e1b4b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.6);
+    }
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500/30 selection:text-brand-200">
+  <div id="app" x-data="promptManagerApp()" x-init="initApp()" class="flex flex-col h-screen overflow-hidden">
+    <!-- Top Header -->
+    <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between z-20 shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-600 via-brand-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+            CyberCrime & NCII Investigation
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-medium bg-rose-500/20 text-rose-300 border border-rose-500/30">Official Training Edition</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">Teknis Doxing & NCII • Telegram & X.com • Takedown & Chain of Custody</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800">
+        <button 
+          @click="activeTab = 'editor'; renderIcons()" 
+          :class="activeTab === 'editor' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all">
+          <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+          <span>Prompt Editor</span>
+        </button>
+        <button 
+          @click="activeTab = 'chaining'; renderIcons()" 
+          :class="activeTab === 'chaining' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all">
+          <i data-lucide="workflow" class="w-3.5 h-3.5"></i>
+          <span>Chaining Pipeline</span>
+          <span x-show="chainSteps.length > 0" x-text="chainSteps.length" class="text-[10px] bg-indigo-800 px-1.5 rounded-full"></span>
+        </button>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- JSON Backup / Restore Group -->
+        <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+          <button 
+            @click="exportJson()" 
+            title="Backup JSON (Lengkap dengan riwayat versi)" 
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="file-json" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span class="hidden sm:inline">Backup JSON</span>
+            <i data-lucide="download" class="w-3 h-3 text-slate-400"></i>
+          </button>
+          
+          <label 
+            title="Restore Backup JSON" 
+            class="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+            <i data-lucide="upload" class="w-3 h-3 text-slate-400"></i>
+            <span class="text-[11px] text-slate-400 hidden lg:inline">Restore</span>
+            <input type="file" accept=".json" class="hidden" @change="importJson($event)">
+          </label>
+        </div>
+
+        <!-- CSV Export / Import Group -->
+        <div class="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+          <button 
+            @click="exportCsv()" 
+            title="Export ke CSV (Spreadsheet / Excel compatible)" 
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span class="hidden sm:inline">CSV</span>
+            <i data-lucide="download" class="w-3 h-3 text-slate-400"></i>
+          </button>
+          
+          <label 
+            title="Import dari CSV" 
+            class="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+            <i data-lucide="upload" class="w-3 h-3 text-slate-400"></i>
+            <span class="text-[11px] text-slate-400 hidden lg:inline">Import</span>
+            <input type="file" accept=".csv,text/csv" class="hidden" @change="importCsv($event)">
+          </label>
+        </div>
+
+        <button 
+          @click="createNewPrompt()" 
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">New Prompt</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div 
+      x-show="toast.show" 
+      x-transition 
+      class="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg shadow-xl border text-xs font-medium"
+      :class="toast.type === 'success' ? 'bg-emerald-950/90 text-emerald-200 border-emerald-800' : 'bg-rose-950/90 text-rose-200 border-rose-800'"
+      x-cloak>
+      <i :data-lucide="toast.type === 'success' ? 'check-circle' : 'alert-circle'" class="w-4 h-4"></i>
+      <span x-text="toast.message"></span>
+    </div>
+
+    <!-- MAIN WORKSPACE -->
+    <main class="flex-1 flex overflow-hidden">
+      
+      <!-- TAB 1: PROMPT EDITOR -->
+      <section x-show="activeTab === 'editor'" class="flex-1 flex w-full h-full overflow-hidden">
+        <!-- Left Sidebar: Hierarchical Prompt Library -->
+        <aside class="w-80 border-r border-slate-800 bg-slate-900/60 flex flex-col shrink-0">
+          <div class="p-3 border-b border-slate-800 flex flex-col gap-2">
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input 
+                type="text" 
+                x-model="searchQuery" 
+                placeholder="Cari Master / Sub / Micro prompt..." 
+                class="w-full bg-slate-950 border border-slate-800 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+            </div>
+            
+            <!-- Tag Filter Pills -->
+            <div class="flex items-center gap-1 overflow-x-auto pb-1 text-[11px] scrollbar-none">
+              <button 
+                @click="selectedTag = ''" 
+                :class="selectedTag === '' ? 'bg-indigo-600 text-white font-semibold' : 'bg-slate-800 text-slate-400 hover:text-slate-200'"
+                class="px-2 py-0.5 rounded-full whitespace-nowrap transition">
+                Semua
+              </button>
+              <template x-for="tag in allTags" :key="tag">
+                <button 
+                  @click="selectedTag = (selectedTag === tag ? '' : tag)" 
+                  :class="selectedTag === tag ? 'bg-indigo-600 text-white font-semibold' : 'bg-slate-800 text-slate-400 hover:text-slate-200'"
+                  class="px-2 py-0.5 rounded-full whitespace-nowrap transition"
+                  x-text="'#' + tag">
+                </button>
+              </template>
+            </div>
+          </div>
+
+          <!-- Prompts List with Category Badges -->
+          <div class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+            <template x-for="prompt in filteredPrompts" :key="prompt.id">
+              <div 
+                @click="selectPrompt(prompt.id)"
+                :class="selectedPromptId === prompt.id ? 'bg-indigo-950/40 border-l-2 border-indigo-500' : 'hover:bg-slate-800/40'"
+                class="p-3 cursor-pointer transition flex flex-col gap-1.5 group">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-1.5 overflow-hidden">
+                    <span 
+                      class="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold shrink-0"
+                      :class="prompt.title.includes('[MASTER]') ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : (prompt.title.includes('[SUB-PROMPT') ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30')">
+                      <span x-text="prompt.title.includes('[MASTER]') ? 'MASTER' : (prompt.title.includes('[SUB-PROMPT') ? 'SUB' : 'MICRO')"></span>
+                    </span>
+                    <h3 class="text-xs font-medium text-slate-200 group-hover:text-indigo-300 transition truncate" x-text="prompt.title"></h3>
+                  </div>
+                  <span class="text-[10px] text-slate-500 font-mono shrink-0" x-text="prompt.versions ? prompt.versions.length + 'v' : '1v'"></span>
+                </div>
+                <p class="text-[11px] text-slate-400 line-clamp-2 font-mono leading-relaxed" x-text="prompt.template"></p>
+                <div class="flex items-center justify-between pt-1">
+                  <div class="flex flex-wrap gap-1">
+                    <template x-for="tag in prompt.tags" :key="tag">
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 border border-slate-700/50" x-text="'#' + tag"></span>
+                    </template>
+                  </div>
+                  <div class="flex items-center gap-1.5 text-[10px] text-indigo-400">
+                    <span x-text="getVariableNames(prompt.template).length + ' vars'"></span>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <div x-show="filteredPrompts.length === 0" class="p-8 text-center text-xs text-slate-500">
+              Tidak ada prompt yang cocok dengan filter.
+            </div>
+          </div>
+
+          <!-- Library Footer Summary -->
+          <div class="p-2.5 border-t border-slate-800 bg-slate-950/80 text-[11px] text-slate-400 flex items-center justify-between">
+            <span x-text="prompts.length + ' Prompt Modul Terdaftar'"></span>
+            <button @click="resetToDefaults()" class="hover:text-indigo-400 underline decoration-slate-600 transition">Reset Modul Resmi</button>
+          </div>
+        </aside>
+
+        <!-- Center & Right: Editor, Parser, & Live Preview -->
+        <div class="flex-1 flex flex-col md:flex-row h-full overflow-hidden bg-slate-950" x-show="currentPrompt">
+          
+          <!-- Middle Column: Prompt Template Editor -->
+          <div class="flex-1 flex flex-col border-r border-slate-800 h-full overflow-hidden">
+            <!-- Editor Subheader -->
+            <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between gap-3">
+              <div class="flex-1 flex items-center gap-2">
+                <input 
+                  type="text" 
+                  x-model="currentPrompt.title" 
+                  @input="autoSaveCurrentPrompt()"
+                  placeholder="Judul Prompt..." 
+                  class="bg-transparent text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded px-1.5 py-1 w-full border border-transparent hover:border-slate-800 transition">
+              </div>
+
+              <div class="flex items-center gap-2 shrink-0">
+                <!-- Tag Input Badge Container -->
+                <div class="flex items-center gap-1 bg-slate-900 px-2 py-1 rounded border border-slate-800">
+                  <i data-lucide="tag" class="w-3 h-3 text-slate-500"></i>
+                  <input 
+                    type="text" 
+                    placeholder="Tambah tags (pisah koma)..." 
+                    :value="(currentPrompt.tags || []).join(', ')"
+                    @change="updateTags($event.target.value)"
+                    class="bg-transparent text-xs text-slate-300 placeholder-slate-600 focus:outline-none w-36">
+                </div>
+
+                <!-- Version History Trigger -->
+                <button 
+                  @click="showVersionHistory = true; renderIcons()" 
+                  title="Lihat Riwayat Versi" 
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                  <i data-lucide="history" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  <span>Versi (<span x-text="(currentPrompt.versions || []).length"></span>)</span>
+                </button>
+
+                <!-- Duplicate Button -->
+                <button 
+                  @click="duplicatePrompt(currentPrompt.id)" 
+                  title="Duplikat Prompt" 
+                  class="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition">
+                  <i data-lucide="copy" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Delete Button -->
+                <button 
+                  @click="deletePrompt(currentPrompt.id)" 
+                  title="Hapus Prompt" 
+                  class="p-1.5 rounded hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 transition">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Editor Info Bar -->
+            <div class="px-4 py-2 bg-slate-900/20 border-b border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1">
+                  <i data-lucide="code" class="w-3 h-3 text-indigo-400"></i>
+                  Sintaks Slot: <code class="text-indigo-300 font-mono bg-indigo-950/40 px-1 rounded">{{nama_variabel}}</code>
+                </span>
+                <span class="text-slate-600">|</span>
+                <span x-text="currentVariables.length + ' variabel dinamis terdeteksi'"></span>
+              </div>
+              <div class="flex items-center gap-3 font-mono">
+                <span x-text="(currentPrompt.template ? currentPrompt.template.length : 0) + ' karakter'"></span>
+                <span x-text="'~' + Math.ceil((currentPrompt.template ? currentPrompt.template.length : 0) / 4) + ' perkiraan token'"></span>
+              </div>
+            </div>
+
+            <!-- Template Textarea -->
+            <div class="flex-1 p-4 flex flex-col relative gap-2">
+              <textarea 
+                x-model="currentPrompt.template" 
+                @input="handleTemplateInput()"
+                placeholder="Tulis template instruksi investigasi di sini... Gunakan {{variabel}} untuk slot dinamis."
+                class="w-full flex-1 bg-slate-900/60 border border-slate-800 rounded-lg p-3.5 text-xs text-slate-100 font-mono resize-none focus:outline-none focus:border-indigo-500 leading-relaxed"></textarea>
+
+              <!-- Quick Helper Bar under Textarea -->
+              <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span>Sisip Cepat:</span>
+                  <button @click="insertVariableSnippet('case_id')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{case_id}}</button>
+                  <button @click="insertVariableSnippet('telegram_target')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{telegram_target}}</button>
+                  <button @click="insertVariableSnippet('x_ad_target')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{x_ad_target}}</button>
+                  <button @click="insertVariableSnippet('officer_callsign')" class="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 font-mono hover:bg-slate-700 transition">+{{officer_callsign}}</button>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="text" 
+                    x-model="versionNoteInput" 
+                    placeholder="Catatan versi (opsional)..." 
+                    class="bg-slate-900 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 w-44 focus:outline-none focus:border-indigo-500">
+                  <button 
+                    @click="commitVersionSnapshot()" 
+                    class="px-2.5 py-1 rounded bg-indigo-600/80 hover:bg-indigo-600 text-white font-medium text-[11px] transition flex items-center gap-1">
+                    <i data-lucide="bookmark" class="w-3 h-3"></i>
+                    Simpan Versi
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Variables Inspector & Resolved Live Preview -->
+          <div class="w-full md:w-96 flex flex-col h-full bg-slate-900/30 overflow-hidden shrink-0">
+            <!-- Variables Section -->
+            <div class="flex-1 flex flex-col border-b border-slate-800 overflow-hidden">
+              <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="sliders" class="w-3.5 h-3.5 text-indigo-400"></i>
+                  <h4 class="text-xs font-semibold text-white">Variabel Kasus Dinamis</h4>
+                  <span x-text="currentVariables.length" class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-900/60 text-indigo-300 font-mono"></span>
+                </div>
+                <button 
+                  @click="clearVariableValues()" 
+                  x-show="currentVariables.length > 0"
+                  class="text-[11px] text-slate-400 hover:text-slate-200 transition">
+                  Kosongkan Nilai
+                </button>
+              </div>
+
+              <!-- Variable inputs list -->
+              <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                <template x-for="v in currentVariables" :key="v">
+                  <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                      <label class="text-[11px] font-mono text-indigo-300 font-medium flex items-center gap-1">
+                        <span>{{</span><span x-text="v"></span><span>}}</span>
+                      </label>
+                      <button 
+                        @click="variableValues[v] = ''" 
+                        x-show="variableValues[v]"
+                        class="text-[10px] text-slate-500 hover:text-slate-300">
+                        reset
+                      </button>
+                    </div>
+                    <textarea 
+                      x-model="variableValues[v]" 
+                      :placeholder="'Isi parameter ' + v + '...'"
+                      rows="2"
+                      class="w-full bg-slate-950 border border-slate-800 rounded-md p-2 text-xs text-slate-200 font-sans focus:outline-none focus:border-indigo-500 resize-none transition"></textarea>
+                  </div>
+                </template>
+
+                <div x-show="currentVariables.length === 0" class="h-full flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <i data-lucide="curly-braces" class="w-6 h-6 text-slate-600"></i>
+                  <p class="text-xs">Tidak ada slot variabel di template ini.</p>
+                  <p class="text-[11px] text-slate-600">Ketik <code class="text-indigo-400 font-mono">{{case_id}}</code> di editor untuk membuat kolom input otomatis di sini.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Output Preview Section -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-slate-950/60">
+              <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="eye" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  <h4 class="text-xs font-semibold text-white">Prompt Siap Eksekusi</h4>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    @click="copyResolvedPrompt()" 
+                    title="Salin Prompt Siap Eksekusi" 
+                    class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition flex items-center gap-1">
+                    <i data-lucide="clipboard" class="w-3 h-3"></i>
+                    <span>Salin</span>
+                  </button>
+                  <button 
+                    @click="simulateOutput()" 
+                    title="Simulasikan Respon Hasil Investigasi" 
+                    class="px-2 py-1 rounded bg-emerald-700/80 hover:bg-emerald-600 text-white text-[11px] font-medium transition flex items-center gap-1">
+                    <i data-lucide="play" class="w-3 h-3"></i>
+                    <span>Simulasi</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview Display Area -->
+              <div class="flex-1 overflow-y-auto p-3">
+                <pre class="whitespace-pre-wrap font-mono text-xs text-slate-300 leading-relaxed select-text" x-text="resolvedPrompt || '(Template prompt kosong)'"></pre>
+              </div>
+
+              <!-- Simulation Output Drawer (if triggered) -->
+              <div x-show="simulatedResponse" class="border-t border-slate-800 bg-slate-900/90 p-3 max-h-48 overflow-y-auto space-y-1">
+                <div class="flex items-center justify-between text-[11px] text-emerald-400 font-semibold">
+                  <span class="flex items-center gap-1"><i data-lucide="check-check" class="w-3 h-3"></i> Hasil Eksekusi Simulasi Investigasi</span>
+                  <button @click="simulatedResponse = ''" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-3 h-3"></i></button>
+                </div>
+                <p class="text-xs text-slate-200 font-mono leading-relaxed" x-text="simulatedResponse"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state when no prompt selected -->
+        <div x-show="!currentPrompt" class="flex-1 flex flex-col items-center justify-center text-slate-500 space-y-3">
+          <i data-lucide="shield-check" class="w-10 h-10 text-slate-600"></i>
+          <p class="text-sm font-medium">Pilih modul prompt dari daftar di sebelah kiri.</p>
+          <button @click="createNewPrompt()" class="px-3 py-1.5 rounded-md bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 transition">
+            Buat Prompt Baru
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB 2: CHAINING WORKFLOW -->
+      <section x-show="activeTab === 'chaining'" class="flex-1 flex flex-col md:flex-row w-full h-full overflow-hidden" x-cloak>
+        <!-- Left: Workflow Builder Steps -->
+        <div class="flex-1 flex flex-col border-r border-slate-800 h-full overflow-hidden bg-slate-950">
+          <!-- Chaining Header -->
+          <div class="p-3 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between">
+            <div>
+              <h2 class="text-xs font-semibold text-white flex items-center gap-2">
+                <i data-lucide="workflow" class="w-4 h-4 text-indigo-400"></i>
+                Pipeline Investigasi Bertahap (Tahap 1 s.d. 4)
+              </h2>
+              <p class="text-[11px] text-slate-400">Menjalankan alur berantai: Infrastruktur Lab & Hash $\rightarrow$ Analisa Jejak $\rightarrow$ Pelaporan Takedown $\rightarrow$ Final Work Report.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button 
+                @click="addChainStep()" 
+                class="flex items-center gap-1 px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Tambah Tahap</span>
+              </button>
+              <button 
+                @click="executeChain()" 
+                :disabled="chainSteps.length === 0 || isRunningChain"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 transition">
+                <i :data-lucide="isRunningChain ? 'loader-2' : 'play'" :class="isRunningChain ? 'animate-spin' : ''" class="w-3.5 h-3.5"></i>
+                <span x-text="isRunningChain ? 'Mengeksekusi Pipeline...' : 'Jalankan Pipeline'"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chain Steps List -->
+          <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <template x-for="(step, index) in chainSteps" :key="step.id">
+              <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 space-y-3 relative group">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 flex items-center justify-center font-mono font-bold text-xs" x-text="index + 1"></span>
+                    <h3 class="text-xs font-semibold text-slate-200">Fase Eksekusi <span x-text="index + 1"></span></h3>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button 
+                      @click="moveChainStep(index, -1)" 
+                      :disabled="index === 0" 
+                      class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
+                      <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button 
+                      @click="moveChainStep(index, 1)" 
+                      :disabled="index === chainSteps.length - 1" 
+                      class="p-1 text-slate-400 hover:text-slate-200 disabled:opacity-20 transition">
+                      <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button 
+                      @click="removeChainStep(index)" 
+                      class="p-1 text-slate-400 hover:text-rose-400 transition ml-1">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Template Selector -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Pilih Modul Prompt</label>
+                    <select 
+                      x-model="step.promptId" 
+                      @change="onStepPromptChange(step)"
+                      class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                      <option value="">-- Pilih Prompt Investigasi --</option>
+                      <template x-for="p in prompts" :key="p.id">
+                        <option :value="p.id" x-text="p.title"></option>
+                      </template>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Mode Masukan Data</label>
+                    <select 
+                      x-model="step.sourceMode" 
+                      class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                      <option value="direct">Parameter Mandiri (Manual Values)</option>
+                      <option value="pipe_previous" :disabled="index === 0">Pipa Hasil dari Fase <span x-text="index"></span></option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Step Variables Mapping -->
+                <div x-show="step.variables && step.variables.length > 0" class="pt-2 border-t border-slate-800/60 space-y-2">
+                  <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Injeksi Parameter Tahapan</span>
+                  <div class="grid grid-cols-1 gap-2">
+                    <template x-for="v in step.variables" :key="v">
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-mono text-indigo-300 w-36 shrink-0 truncate" x-text="'{{' + v + '}}'"></span>
+                        <input 
+                          type="text" 
+                          x-model="step.variableValues[v]" 
+                          :placeholder="step.sourceMode === 'pipe_previous' && index > 0 ? 'Diteruskan otomatis dari Fase ' + index : 'Nilai parameter...'"
+                          class="flex-1 bg-slate-950 border border-slate-800 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <div x-show="chainSteps.length === 0" class="p-12 text-center text-slate-500 space-y-3">
+              <i data-lucide="git-merge" class="w-10 h-10 text-slate-600 mx-auto"></i>
+              <p class="text-xs">Belum ada tahapan dalam alur pipeline investigasi.</p>
+              <button @click="addChainStep()" class="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-500 transition">
+                Tambahkan Fase Pertama
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Execution Trace & Pipeline Outputs -->
+        <div class="w-full md:w-[440px] flex flex-col h-full bg-slate-900/40 overflow-hidden shrink-0">
+          <div class="p-3 border-b border-slate-800 bg-slate-900/60 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-indigo-400"></i>
+              <h3 class="text-xs font-semibold text-white">Log Hasil Eksekusi Pipeline</h3>
+            </div>
+            <button 
+              @click="copyFullChainOutput()" 
+              x-show="chainExecutionResults.length > 0"
+              class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition flex items-center gap-1">
+              <i data-lucide="copy" class="w-3 h-3"></i>
+              <span>Salin Semua</span>
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-4 space-y-4">
+            <template x-for="(res, idx) in chainExecutionResults" :key="idx">
+              <div class="bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between text-[11px]">
+                  <span class="font-semibold text-indigo-300" x-text="'Fase ' + (idx + 1) + ': ' + res.title"></span>
+                  <span class="text-slate-500 font-mono" x-text="res.time"></span>
+                </div>
+                <div class="text-[11px] text-slate-400">
+                  <span class="font-medium text-slate-500">Prompt Terkonstruksi:</span>
+                  <p class="font-mono text-slate-300 bg-slate-900/80 p-2 rounded mt-1 line-clamp-3" x-text="res.prompt"></p>
+                </div>
+                <div class="text-[11px] text-emerald-400">
+                  <span class="font-medium text-emerald-500">Hasil Output Eksekusi:</span>
+                  <p class="font-mono text-emerald-200 bg-emerald-950/30 border border-emerald-900/40 p-2 rounded mt-1 select-text" x-text="res.output"></p>
+                </div>
+              </div>
+            </template>
+
+            <div x-show="chainExecutionResults.length === 0" class="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-2">
+              <i data-lucide="activity" class="w-8 h-8 text-slate-600"></i>
+              <p class="text-xs">Belum ada riwayat eksekusi pipeline.</p>
+              <p class="text-[11px] text-slate-600">Klik "Jalankan Pipeline" untuk mensimulasikan alur investigasi beruntun.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Version History Modal -->
+    <div 
+      x-show="showVersionHistory" 
+      x-transition 
+      class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" 
+      x-cloak>
+      <div 
+        @click.away="showVersionHistory = false"
+        class="bg-slate-900 border border-slate-800 rounded-xl max-w-xl w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+        
+        <div class="p-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+          <div class="flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i>
+            <h3 class="text-xs font-semibold text-white">
+              Riwayat Versi — <span x-text="currentPrompt ? currentPrompt.title : ''"></span>
+            </h3>
+          </div>
+          <button @click="showVersionHistory = false" class="text-slate-400 hover:text-slate-200">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <template x-for="(v, index) in (currentPrompt && currentPrompt.versions ? currentPrompt.versions : [])" :key="index">
+            <div class="p-3 rounded-lg border border-slate-800 bg-slate-950/70 space-y-2 hover:border-slate-700 transition">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-mono font-bold text-indigo-400" x-text="'v' + (currentPrompt.versions.length - index)"></span>
+                  <span class="text-[11px] text-slate-400" x-text="formatDate(v.timestamp)"></span>
+                  <span x-show="v.note" class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded" x-text="v.note"></span>
+                </div>
+                <button 
+                  @click="restoreVersion(v)" 
+                  class="px-2 py-1 rounded bg-indigo-600/80 hover:bg-indigo-600 text-white text-[11px] font-medium transition flex items-center gap-1">
+                  <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                  Pulihkan
+                </button>
+              </div>
+              <pre class="text-[11px] font-mono text-slate-400 line-clamp-3 bg-slate-900/60 p-2 rounded" x-text="v.template"></pre>
+            </div>
+          </template>
+
+          <div x-show="!currentPrompt || !currentPrompt.versions || currentPrompt.versions.length === 0" class="p-6 text-center text-xs text-slate-500">
+            Belum ada versi tersimpan. Gunakan tombol "Simpan Versi" di editor.
+          </div>
+        </div>
+
+        <div class="p-3 border-t border-slate-800 bg-slate-950 flex justify-end">
+          <button @click="showVersionHistory = false" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700 transition">
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function promptManagerApp() {
+      return {
+        activeTab: 'editor',
+        prompts: [],
+        selectedPromptId: null,
+        currentPrompt: null,
+        currentVariables: [],
+        variableValues: {},
+        searchQuery: '',
+        selectedTag: '',
+        versionNoteInput: '',
+        showVersionHistory: false,
+        simulatedResponse: '',
+        toast: { show: false, message: '', type: 'success', timer: null },
+        
+        // Chaining State
+        chainSteps: [],
+        isRunningChain: false,
+        chainExecutionResults: [],
+
+        initApp() {
+          this.loadPrompts();
+          this.loadChain();
+          this.renderIcons();
+        },
+
+        renderIcons() {
+          setTimeout(() => {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+              window.lucide.createIcons();
+            }
+          }, 50);
+        },
+
+        showToastMessage(msg, type = 'success') {
+          if (this.toast.timer) clearTimeout(this.toast.timer);
+          this.toast.message = msg;
+          this.toast.type = type;
+          this.toast.show = true;
+          this.renderIcons();
+          this.toast.timer = setTimeout(() => {
+            this.toast.show = false;
+          }, 3000);
+        },
+
+        get allTags() {
+          const tags = new Set();
+          this.prompts.forEach(p => {
+            if (Array.isArray(p.tags)) {
+              p.tags.forEach(t => t && tags.add(t.trim()));
+            }
+          });
+          return Array.from(tags);
+        },
+
+        get filteredPrompts() {
+          return this.prompts.filter(p => {
+            const matchesSearch = !this.searchQuery || 
+              (p.title && p.title.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+              (p.template && p.template.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+              (Array.isArray(p.tags) && p.tags.some(t => t.toLowerCase().includes(this.searchQuery.toLowerCase())));
+
+            const matchesTag = !this.selectedTag || (Array.isArray(p.tags) && p.tags.includes(this.selectedTag));
+            return matchesSearch && matchesTag;
+          });
+        },
+
+        get resolvedPrompt() {
+          if (!this.currentPrompt || !this.currentPrompt.template) return '';
+          let output = this.currentPrompt.template;
+          this.currentVariables.forEach(v => {
+            const regex = new RegExp('\\{\\{\\s*' + v + '\\s*\\}\\}', 'g');
+            const val = this.variableValues[v] !== undefined && this.variableValues[v] !== '' ? this.variableValues[v] : '{{' + v + '}}';
+            output = output.replace(regex, val);
+          });
+          return output;
+        },
+
+        getVariableNames(template) {
+          if (!template) return [];
+          const matches = template.match(/\{\{([a-zA-Z0-9_\s]+)\}\}/g) || [];
+          const unique = new Set();
+          matches.forEach(m => {
+            const name = m.replace(/\{\{|\}\}/g, '').trim();
+            if (name) unique.add(name);
+          });
+          return Array.from(unique);
+        },
+
+        loadPrompts() {
+          const storageKey = 'promptcraft_cybercrime_prompts_v2';
+          const stored = localStorage.getItem(storageKey);
+          if (stored) {
+            try {
+              this.prompts = JSON.parse(stored);
+            } catch (e) {
+              console.error(e);
+              this.prompts = this.getDefaultPrompts();
+            }
+          } else {
+            this.prompts = this.getDefaultPrompts();
+            localStorage.setItem(storageKey, JSON.stringify(this.prompts));
+          }
+
+          if (this.prompts.length > 0) {
+            this.selectPrompt(this.prompts[0].id);
+          }
+        },
+
+        savePrompts() {
+          localStorage.setItem('promptcraft_cybercrime_prompts_v2', JSON.stringify(this.prompts));
+        },
+
+        selectPrompt(id) {
+          this.selectedPromptId = id;
+          const found = this.prompts.find(p => p.id === id);
+          if (found) {
+            this.currentPrompt = found;
+            if (!this.currentPrompt.versions) {
+              this.currentPrompt.versions = [];
+            }
+            this.updateCurrentVariables();
+          }
+          this.simulatedResponse = '';
+          this.renderIcons();
+        },
+
+        updateCurrentVariables() {
+          if (!this.currentPrompt) return;
+          const vars = this.getVariableNames(this.currentPrompt.template);
+          this.currentVariables = vars;
+          
+          // Pre-populate sensible forensic test defaults for common variables if not set
+          const forensicDefaults = {
+            case_id: 'CCU-NCII-2026-0987',
+            telegram_target: 't.me/priv_leak_vip_channel',
+            x_ad_target: '@promo_link_tele69',
+            investigation_date: '2026-09-27',
+            officer_callsign: 'CyberOps-Inspector-04',
+            venv_name: 'forensic_cyber_env',
+            search_keywords: 'doxxed, bocor telegram, t.me/joinchat, link pemersatu',
+            encryption_key_id: 'KEY-CCU-AES256-SECURE',
+            stopncii_case_id: 'SN-8842-9901-ID',
+            x_post_id: '1839201948572019',
+            report_timestamp: '2026-09-27T14:30:00Z',
+            investigation_unit_key: 'cybercrime-unit@polri.go.id'
+          };
+
+          vars.forEach(v => {
+            if (this.variableValues[v] === undefined) {
+              this.variableValues[v] = forensicDefaults[v] || '';
+            }
+          });
+        },
+
+        handleTemplateInput() {
+          this.updateCurrentVariables();
+          this.autoSaveCurrentPrompt();
+        },
+
+        autoSaveCurrentPrompt() {
+          this.savePrompts();
+        },
+
+        updateTags(tagString) {
+          if (!this.currentPrompt) return;
+          this.currentPrompt.tags = tagString.split(',')
+            .map(t => t.trim().replace(/^#/, ''))
+            .filter(t => t.length > 0);
+          this.autoSaveCurrentPrompt();
+        },
+
+        createNewPrompt() {
+          const newId = 'micro_custom_' + Date.now();
+          const newPrompt = {
+            id: newId,
+            title: '[MICRO] Instruksi Teknis Tambahan',
+            tags: ['Micro', 'Investigasi', 'Custom'],
+            template: 'Konteks: Penanganan Kasus {{case_id}} oleh Petugas {{officer_callsign}}.\nTarget: {{target_entity}}\n\nInstruksikan prosedur teknis operasional berikut:\n1. Eksekusi CLI langkah demi langkah.\n2. Verifikasi hash SHA-256 terhadap artefak bukti.',
+            versions: [
+              {
+                timestamp: Date.now(),
+                template: 'Konteks: Penanganan Kasus {{case_id}} oleh Petugas {{officer_callsign}}.\nTarget: {{target_entity}}\n\nInstruksikan prosedur teknis operasional berikut:\n1. Eksekusi CLI langkah demi langkah.\n2. Verifikasi hash SHA-256 terhadap artefak bukti.',
+                note: 'Inisialisasi prompt'
+              }
+            ]
+          };
+          this.prompts.unshift(newPrompt);
+          this.savePrompts();
+          this.selectPrompt(newId);
+          this.showToastMessage('Prompt baru berhasil ditambahkan');
+        },
+
+        duplicatePrompt(id) {
+          const src = this.prompts.find(p => p.id === id);
+          if (!src) return;
+          const clone = JSON.parse(JSON.stringify(src));
+          clone.id = 'prompt_' + Date.now();
+          clone.title = (clone.title || 'Untitled') + ' (Salinan)';
+          this.prompts.unshift(clone);
+          this.savePrompts();
+          this.selectPrompt(clone.id);
+          this.showToastMessage('Prompt berhasil diduplikasi');
+        },
+
+        deletePrompt(id) {
+          this.prompts = this.prompts.filter(p => p.id !== id);
+          this.savePrompts();
+          if (this.prompts.length > 0) {
+            this.selectPrompt(this.prompts[0].id);
+          } else {
+            this.currentPrompt = null;
+            this.selectedPromptId = null;
+          }
+          this.showToastMessage('Prompt berhasil dihapus');
+        },
+
+        insertVariableSnippet(name) {
+          if (!this.currentPrompt) return;
+          this.currentPrompt.template = (this.currentPrompt.template || '') + ' {{' + name + '}}';
+          this.handleTemplateInput();
+        },
+
+        clearVariableValues() {
+          this.currentVariables.forEach(v => {
+            this.variableValues[v] = '';
+          });
+          this.showToastMessage('Nilai variabel dikosongkan');
+        },
+
+        commitVersionSnapshot() {
+          if (!this.currentPrompt) return;
+          if (!this.currentPrompt.versions) this.currentPrompt.versions = [];
+          this.currentPrompt.versions.unshift({
+            timestamp: Date.now(),
+            template: this.currentPrompt.template,
+            note: this.versionNoteInput.trim() || 'Pembaruan versi manual'
+          });
+          this.versionNoteInput = '';
+          this.savePrompts();
+          this.showToastMessage('Versi snapshot berhasil disimpan');
+          this.renderIcons();
+        },
+
+        restoreVersion(v) {
+          if (!this.currentPrompt) return;
+          this.currentPrompt.template = v.template;
+          this.handleTemplateInput();
+          this.showVersionHistory = false;
+          this.showToastMessage('Versi sebelumnya berhasil dipulihkan');
+        },
+
+        copyResolvedPrompt() {
+          if (!this.resolvedPrompt) return;
+          navigator.clipboard.writeText(this.resolvedPrompt).then(() => {
+            this.showToastMessage('Prompt siap eksekusi disalin ke clipboard!');
+          }).catch(() => {
+            this.showToastMessage('Gagal menyalin', 'error');
+          });
+        },
+
+        simulateOutput() {
+          if (!this.resolvedPrompt) return;
+          const caseRef = this.variableValues['case_id'] || 'CCU-CASE-CURRENT';
+          const officer = this.variableValues['officer_callsign'] || 'Investigator-In-Charge';
+          
+          this.simulatedResponse = `[SIMULASI RESPON ENGINE FORENSIK]
+Status Kasus: ${caseRef} | Operator: ${officer}
+-------------------------------------------------------------
+1. Validasi OPSEC: Sandbox terisolasi (Tor routing aktif, DNS leak = 0).
+2. Artefak Ingested: 14 tangkapan layar, 3 video stream, 1 manifest hash.
+3. Cryptographic Signature: SHA-256 terverifikasi pada chain of custody.
+4. Takedown Status: Tiket StopNCII terbit, laporan abuse Telegram/X terkirim.`;
+          this.renderIcons();
+        },
+
+        exportJson() {
+          const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.prompts, null, 2));
+          const dlAnchor = document.createElement('a');
+          dlAnchor.setAttribute('href', dataStr);
+          dlAnchor.setAttribute('download', 'cybercrime_prompt_backup_' + new Date().toISOString().slice(0,10) + '.json');
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          dlAnchor.remove();
+          this.showToastMessage('Backup JSON berhasil diunduh');
+        },
+
+        importJson(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const parsed = JSON.parse(e.target.result);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                this.prompts = parsed;
+                this.savePrompts();
+                this.selectPrompt(this.prompts[0].id);
+                this.showToastMessage(`Berhasil memulihkan ${parsed.length} prompt dari backup JSON`);
+              } else {
+                this.showToastMessage('Format JSON tidak valid: diharapkan array prompt', 'error');
+              }
+            } catch (err) {
+              console.error(err);
+              this.showToastMessage('Gagal memproses file JSON backup', 'error');
+            }
+          };
+          reader.readAsText(file);
+          event.target.value = '';
+        },
+
+        exportCsv() {
+          if (!this.prompts || this.prompts.length === 0) {
+            this.showToastMessage('Tidak ada prompt untuk diekspor ke CSV', 'error');
+            return;
+          }
+
+          const headers = ['Title', 'Tags', 'Template', 'ID'];
+          
+          const escapeCsvCell = (val) => {
+            if (val === null || val === undefined) return '""';
+            const str = String(val);
+            const escaped = str.replace(/"/g, '""');
+            return `"${escaped}"`;
+          };
+
+          const rows = [
+            headers.map(h => `"${h}"`).join(',')
+          ];
+
+          this.prompts.forEach(p => {
+            const tagsStr = Array.isArray(p.tags) ? p.tags.join('; ') : '';
+            const row = [
+              escapeCsvCell(p.title || 'Untitled Prompt'),
+              escapeCsvCell(tagsStr),
+              escapeCsvCell(p.template || ''),
+              escapeCsvCell(p.id || '')
+            ];
+            rows.push(row.join(','));
+          });
+
+          const csvContent = '\uFEFF' + rows.join('\r\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const dlAnchor = document.createElement('a');
+          dlAnchor.setAttribute('href', url);
+          dlAnchor.setAttribute('download', 'cybercrime_prompts_' + new Date().toISOString().slice(0, 10) + '.csv');
+          document.body.appendChild(dlAnchor);
+          dlAnchor.click();
+          dlAnchor.remove();
+          URL.revokeObjectURL(url);
+          this.showToastMessage(`Berhasil mengekspor ${this.prompts.length} prompt ke CSV`);
+        },
+
+        parseCsvText(text) {
+          const rows = [];
+          let currentRow = [];
+          let currentVal = '';
+          let inQuotes = false;
+          
+          if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.slice(1);
+          }
+
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (inQuotes) {
+              if (char === '"') {
+                if (nextChar === '"') {
+                  currentVal += '"';
+                  i++;
+                } else {
+                  inQuotes = false;
+                }
+              } else {
+                currentVal += char;
+              }
+            } else {
+              if (char === '"') {
+                inQuotes = true;
+              } else if (char === ',') {
+                currentRow.push(currentVal);
+                currentVal = '';
+              } else if (char === '\r') {
+                if (nextChar === '\n') i++;
+                currentRow.push(currentVal);
+                rows.push(currentRow);
+                currentRow = [];
+                currentVal = '';
+              } else if (char === '\n') {
+                currentRow.push(currentVal);
+                rows.push(currentRow);
+                currentRow = [];
+                currentVal = '';
+              } else {
+                currentVal += char;
+              }
+            }
+          }
+          if (currentVal || currentRow.length > 0) {
+            currentRow.push(currentVal);
+            rows.push(currentRow);
+          }
+          return rows.filter(r => r.some(c => c && c.trim().length > 0));
+        },
+
+        importCsv(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const text = e.target.result;
+              const parsedRows = this.parseCsvText(text);
+
+              if (parsedRows.length === 0) {
+                this.showToastMessage('File CSV kosong', 'error');
+                return;
+              }
+
+              let headerRow = parsedRows[0].map(h => h.trim().toLowerCase());
+              let titleCol = headerRow.findIndex(h => h.includes('title') || h.includes('judul') || h.includes('name'));
+              let tagsCol = headerRow.findIndex(h => h.includes('tag') || h.includes('label') || h.includes('kategori'));
+              let templateCol = headerRow.findIndex(h => h.includes('template') || h.includes('prompt') || h.includes('content') || h.includes('text') || h.includes('isi'));
+              let idCol = headerRow.findIndex(h => h === 'id' || h.endsWith('_id'));
+
+              let startIndex = 1;
+              if (titleCol === -1 && templateCol === -1) {
+                startIndex = 0;
+                titleCol = 0;
+                tagsCol = parsedRows[0].length > 2 ? 1 : -1;
+                templateCol = parsedRows[0].length > 1 ? (tagsCol === 1 ? 2 : 1) : 0;
+              } else {
+                if (titleCol === -1) titleCol = 0;
+                if (templateCol === -1) templateCol = Math.min(1, parsedRows[0].length - 1);
+              }
+
+              const newPrompts = [];
+              for (let i = startIndex; i < parsedRows.length; i++) {
+                const row = parsedRows[i];
+                if (!row || row.length === 0) continue;
+
+                const title = (titleCol >= 0 && row[titleCol] ? row[titleCol].trim() : '') || 'Untitled Prompt';
+                const template = (templateCol >= 0 && row[templateCol] ? row[templateCol] : '') || '';
+                
+                let tags = [];
+                if (tagsCol >= 0 && row[tagsCol]) {
+                  tags = row[tagsCol].split(/[;,|]/).map(t => t.trim().replace(/^#/, '')).filter(t => t.length > 0);
+                }
+                if (tags.length === 0) {
+                  tags = ['imported'];
+                }
+
+                const promptId = (idCol >= 0 && row[idCol] && row[idCol].trim()) 
+                  ? row[idCol].trim() 
+                  : ('prompt_csv_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6));
+
+                if (title || template) {
+                  newPrompts.push({
+                    id: promptId,
+                    title: title,
+                    tags: tags,
+                    template: template,
+                    versions: [
+                      {
+                        timestamp: Date.now(),
+                        template: template,
+                        note: 'Imported from CSV'
+                      }
+                    ]
+                  });
+                }
+              }
+
+              if (newPrompts.length === 0) {
+                this.showToastMessage('Tidak ada data prompt yang valid dalam file CSV', 'error');
+                return;
+              }
+
+              this.prompts = [...newPrompts, ...this.prompts];
+              this.savePrompts();
+              this.selectPrompt(newPrompts[0].id);
+              this.showToastMessage(`Berhasil mengimpor ${newPrompts.length} prompt dari CSV!`);
+            } catch (err) {
+              console.error(err);
+              this.showToastMessage('Gagal memproses file CSV: ' + err.message, 'error');
+            }
+          };
+          reader.readAsText(file);
+          event.target.value = '';
+        },
+
+        resetToDefaults() {
+          this.prompts = this.getDefaultPrompts();
+          this.savePrompts();
+          if (this.prompts.length > 0) {
+            this.selectPrompt(this.prompts[0].id);
+          }
+          this.showToastMessage('Modul resmi cybercrime berhasil dipulihkan');
+        },
+
+        formatDate(ts) {
+          if (!ts) return '';
+          return new Date(ts).toLocaleString('id-ID');
+        },
+
+        // --- Chaining Engine Methods ---
+        loadChain() {
+          const stored = localStorage.getItem('promptcraft_cybercrime_chain_v2');
+          if (stored) {
+            try {
+              this.chainSteps = JSON.parse(stored);
+            } catch(e) {
+              this.chainSteps = this.getDefaultChainSteps();
+            }
+          } else {
+            this.chainSteps = this.getDefaultChainSteps();
+            this.saveChain();
+          }
+        },
+
+        saveChain() {
+          localStorage.setItem('promptcraft_cybercrime_chain_v2', JSON.stringify(this.chainSteps));
+        },
+
+        addChainStep() {
+          const firstPrompt = this.prompts[0] || null;
+          const step = {
+            id: 'step_' + Date.now(),
+            promptId: firstPrompt ? firstPrompt.id : '',
+            sourceMode: this.chainSteps.length > 0 ? 'pipe_previous' : 'direct',
+            variables: firstPrompt ? this.getVariableNames(firstPrompt.template) : [],
+            variableValues: {}
+          };
+          this.chainSteps.push(step);
+          this.saveChain();
+          this.renderIcons();
+        },
+
+        removeChainStep(index) {
+          this.chainSteps.splice(index, 1);
+          this.saveChain();
+          this.renderIcons();
+        },
+
+        moveChainStep(index, direction) {
+          const newIdx = index + direction;
+          if (newIdx < 0 || newIdx >= this.chainSteps.length) return;
+          const item = this.chainSteps.splice(index, 1)[0];
+          this.chainSteps.splice(newIdx, 0, item);
+          this.saveChain();
+          this.renderIcons();
+        },
+
+        onStepPromptChange(step) {
+          const p = this.prompts.find(item => item.id === step.promptId);
+          if (p) {
+            step.variables = this.getVariableNames(p.template);
+            step.variableValues = {};
+            step.variables.forEach(v => {
+              step.variableValues[v] = this.variableValues[v] || '';
+            });
+          } else {
+            step.variables = [];
+            step.variableValues = {};
+          }
+          this.saveChain();
+        },
+
+        async executeChain() {
+          if (this.chainSteps.length === 0 || this.isRunningChain) return;
+          this.isRunningChain = true;
+          this.chainExecutionResults = [];
+          this.renderIcons();
+
+          let previousOutput = '';
+
+          for (let i = 0; i < this.chainSteps.length; i++) {
+            const step = this.chainSteps[i];
+            const prompt = this.prompts.find(p => p.id === step.promptId);
+            const title = prompt ? prompt.title : ('Fase ' + (i + 1));
+            let template = prompt ? prompt.template : 'No template';
+
+            // Resolve prompt variables
+            if (step.sourceMode === 'pipe_previous' && i > 0 && previousOutput) {
+              const vars = step.variables || [];
+              if (vars.length > 0) {
+                const targetVar = vars[0];
+                step.variableValues[targetVar] = previousOutput;
+              }
+            }
+
+            let resolved = template;
+            (step.variables || []).forEach(v => {
+              const val = step.variableValues[v] || this.variableValues[v] || `[${v}]`;
+              const regex = new RegExp('\\{\\{\\s*' + v + '\\s*\\}\\}', 'g');
+              resolved = resolved.replace(regex, val);
+            });
+
+            await new Promise(r => setTimeout(r, 650));
+
+            const simulatedOutput = `[FASE ${i + 1} TERSELESAIKAN - ${title}]
+Parameter Terkonfigurasi: ${step.variables ? step.variables.length : 0} variabel tervalidasi.
+Integritas Forensik: SHA-256 hashing aktif, sandbox routing aman.
+Ringkasan Artefak: Bukti digital tersinkronisasi untuk pelaporan takedown & work report.`;
+            previousOutput = simulatedOutput;
+
+            this.chainExecutionResults.push({
+              title,
+              prompt: resolved,
+              output: simulatedOutput,
+              time: new Date().toLocaleTimeString('id-ID')
+            });
+          }
+
+          this.isRunningChain = false;
+          this.showToastMessage('Seluruh fase pipeline berhasil dieksekusi');
+          this.renderIcons();
+        },
+
+        copyFullChainOutput() {
+          if (this.chainExecutionResults.length === 0) return;
+          const text = this.chainExecutionResults.map((r, i) => {
+            return `============================================================\nFASE ${i + 1}: ${r.title}\n============================================================\nPROMPT:\n${r.prompt}\n\nHASIL EKSEKUSI:\n${r.output}\n`;
+          }).join('\n------------------------------------------------------------\n\n');
+          navigator.clipboard.writeText(text).then(() => {
+            this.showToastMessage('Seluruh log hasil pipeline berhasil disalin!');
+          });
+        },
+
+        getDefaultPrompts() {
+          return [
+            {
+              id: 'master_cyber_investigation',
+              title: '[MASTER] Framework Instruksi Pelatihan Investigasi Cybercrime & NCII Takedown',
+              tags: ['Master', 'Framework', 'Cybercrime', 'NCII', 'Telegram', 'OSINT'],
+              template: `Anda adalah seorang Senior Lead Cybercrime Investigator & Instructional Designer Forensik Digital resmi. Konteks tugas Anda adalah memandu dan menyusun modul teknis investigasi kejahatan siber berintensitas tinggi, berfokus khusus pada penanganan kejahatan Doxing dan Non-Consensual Intimate Imagery (NCII) yang disebarkan melalui ekosistem channel/grup Telegram dan dipromosikan melalui postingan iklan di X.com (Twitter).
+
+OPERATIONAL DIRECTIVES:
+1. Target Peserta: Tenaga teknis cybercrime resmi negara dan personil teknis advokasi NGO perlindungan perempuan yang telah terikat wewenang operasional resmi.
+2. Fokus Instruksional: Murni TECHNICAL HANDLING. Berikan perintah CLI (Command Line Interface), skrip otomasi Bash/Python, konfigurasi environment sandbox, metodologi OSINT, ekstraksi metadata, perhitungan cryptographic hash, dan format template pelaporan takedown teknis.
+3. Batasan Mutlak: ABAIKAN pembahasan retorika hukum normatif, konseling psikologis, maupun perdebatan privasi umum. Seluruh instruksi harus actionable, terstruktur, presisi langkah-demi-langkah (step-by-step), dan berorientasi hasil pembuktian forensik.
+4. Parameter Kasus Saat Ini:
+   - Kasus ID: {{case_id}}
+   - Target Telegram Entity: {{telegram_target}} (ID/Link/Group/Channel)
+   - Akun/Post Iklan X.com: {{x_ad_target}}
+   - Tanggal Investigasi: {{investigation_date}}
+   - Petugas Pelaksana: {{officer_callsign}}
+
+Saat mengeksekusi instruksi turunan di setiap tahapan, Anda wajib mempertahankan ketat integritas chain of custody, prinsip isolasi sandbox, dan format artefak digital standar forensik internasional (ISO/IEC 27037).`,
+              versions: [
+                {
+                  timestamp: Date.now() - 86400000,
+                  template: 'Master framework prompt investigasi cybercrime & NCII resmi.',
+                  note: 'Standarisasi awal modul'
+                }
+              ]
+            },
+            {
+              id: 'sub_tahap_1_infrastruktur',
+              title: '[SUB-PROMPT 1] Inisiasi Lab Forensik & Sistem Monitoring Deteksi Dini',
+              tags: ['Tahap-1', 'Sub', 'Infrastruktur', 'Kali-Linux', 'Monitoring'],
+              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Operator: {{officer_callsign}}):
+Inisiasi Tahap 1: Persiapan Infrastruktur Lab Forensik dan Sistem Deteksi Dini.
+
+Tujuan:
+Membangun lingkungan kerja virtual yang aman (VirtualBox di Windows 11 host), terisolasi dari kebocoran jejak (anti-leak OPSEC), dan siap menjalankan monitoring preventif terhadap aktivitas doxing/NCII di Telegram dan X.com.
+
+Instruksikan modul ini dengan rincian teknis operasional:
+1. Arsitektur isolasi jaringan (Host-Only / NAT Network + Tor/VPN chained proxy).
+2. Mekanisme crawling pasif tanpa interaksi aktif (non-attributable passive monitoring).
+3. Struktur baku direktori penyimpan artefak forensik dengan hashing otomatis saat ingest data.`,
+              versions: []
+            },
+            {
+              id: 'micro_1_1_kali_setup',
+              title: '[MICRO 1.1] Setup & Konfigurasi Kali Linux Sandbox (VirtualBox on Win11)',
+              tags: ['Tahap-1', 'Micro', 'Infrastruktur', 'Kali-Linux', 'Tutorial'],
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Petugas: {{officer_callsign}})
+Aktivitas: Setup Lingkungan Kerja Investigasi Kali Linux di Oracle VirtualBox (Host: Windows 11).
+
+Berikan modul teknis tutorial dan konfigurasi CLI lengkap:
+1. Konfigurasi VM:
+   - Pengaturan Network Adapter (NAT + Internal Host adapter), disable Shared Clipboard dan Drag'n'Drop demi OPSEC.
+   - Pengalokasian Core CPU, RAM minimal 4GB, dan disk swap terenkripsi.
+2. Paket Tool Wajib yang diinstal via terminal:
+   - Tool Telegram Scraping & OSINT: telethon, snscrape/twscrape, exiftool, ffmpeg, yt-dlp.
+   - Tool Analisis Web & Scraping: curl, jq, torsocks, proxychains4.
+   - Tool Validasi Forensik: sha256sum, md5sum, sleuthkit, autopsy CLI utilities.
+3. Skrip Bash automasi instalasi dependensi Python virtual environment (venv) agar library tidak konflik dengan system packages:
+   Nama target venv: {{venv_name}}
+4. Verifikasi isolasi IP & DNS leak check menggunakan CLI sebelum memulai aktivitas jaringan.`,
+              versions: []
+            },
+            {
+              id: 'micro_1_2_monitoring_system',
+              title: '[MICRO 1.2] Sistem Monitoring Deteksi Dini (Anti-Cloning, Anti-Reupload, Anti-Repost)',
+              tags: ['Tahap-1', 'Micro', 'Monitoring', 'Telegram', 'X-Twitter', 'Skrip'],
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}} | Target: {{telegram_target}})
+Aktivitas: Pembangunan Sistem Deteksi Dini & Scraping Pasif (Anti-Cloning & Anti-Reupload).
+
+Susun modul teknis konfigurasi monitoring otomatis:
+1. Deteksi Iklan Sindikat di X.com:
+   - Konfigurasi kata kunci boolean query (contoh: format t.me/, t.me/joinchat/, kata kunci pencarian: {{search_keywords}}).
+   - Skrip Python pasif untuk mengumpulkan tweet/iklan berulang, ID poster, user creation date, dan link redirect Telegram.
+2. Monitoring Kanal/Grup Telegram:
+   - Implementasi Telegram Client API (menggunakan Telethon dengan akun riset dummy burner berotasi proxy).
+   - Filter pendeteksi postingan berulang (message hashing / text similarity distance) untuk melacak jaringan channel kloning (mirroring channel).
+3. Aturan Alerting Otomatis:
+   - Format alert JSON ketika terdeteksi tautan target baru {{telegram_target}} yang diiklankan di X.com.`,
+              versions: []
+            },
+            {
+              id: 'micro_1_3_directory_custody',
+              title: '[MICRO 1.3] Standardisasi Direktori & Manajemen Chain of Custody Bukti Digital',
+              tags: ['Tahap-1', 'Micro', 'Forensik', 'Chain-of-Custody', 'Template'],
+              template: `Konteks: Tahap 1 - Persiapan Infrastruktur (Kasus: {{case_id}})
+Aktivitas: Standardisasi Template Direktori & Chain of Custody Digital.
+
+Rancang skrip Bash struktur penyimpanan bukti digital berstandar ISO/IEC 27037:
+1. Hirarki Folder Kasus:
+   /evidence/{{case_id}}/
+   ├── 01_raw_capture/ (Media asli, raw stream, PCAP, screenshot ber-timestamp)
+   ├── 02_metadata/ (JSON dump Telegram message, header X.com, DNS logs)
+   ├── 03_hashes/ (Log checksum SHA-256 dan MD5)
+   └── 04_report_artifacts/ (Bahan siap submit takedown)
+2. Skrip otomatisasi penamaan file (File Naming Convention):
+   Format: [TIMESTAMP_UTC]_[PLATFORM]_[TARGET_ID]_[ARTEFACT_TYPE].ext
+3. Skrip Bash auto_hasher.sh:
+   Menghitung SHA-256 secara langsung pada setiap file baru yang masuk ke 01_raw_capture/, mengunci izin berkas menjadi Read-Only (chmod 444), dan menuliskan ke hash_manifest.txt.`,
+              versions: []
+            },
+            {
+              id: 'sub_tahap_2_investigasi',
+              title: '[SUB-PROMPT 2] Inisiasi Eksekusi Investigasi Forensik & Analisis Data Digital',
+              tags: ['Tahap-2', 'Sub', 'Investigasi', 'OSINT', 'Forensik'],
+              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Target: {{telegram_target}}):
+Inisiasi Tahap 2: Eksekusi Investigasi dan Analisis Forensik Digital.
+
+Tujuan:
+Mengekstraksi data mentah dari postingan iklan di X.com ({{x_ad_target}}) dan channel/grup Telegram target {{telegram_target}}, mengidentifikasi metadata digital penyerang/distributor konten NCII/doxing, serta membekukan bukti dalam bentuk paket forensik terverifikasi.
+
+Instruksikan modul ini dengan fokus:
+1. Ekstraksi artefak perpesanan Telegram (User ID, Channel ID, Access Hash, Message ID, Media Document ID).
+2. Ekstraksi artefak X.com (Tweet ID, Author ID, Client Source, URL Expanders).
+3. Analisis integritas media (EXIF/XMP stripping analysis & per-file cryptographic fingerprinting).`,
+              versions: []
+            },
+            {
+              id: 'micro_2_1_tool_analysis',
+              title: '[MICRO 2.1] Tutorial Tool Kali Linux: Analisa Data Telegram & X.com',
+              tags: ['Tahap-2', 'Micro', 'Kali-Linux', 'Telegram', 'X-Twitter', 'Tutorial'],
+              template: `Konteks: Tahap 2 - Eksekusi Investigasi (Kasus: {{case_id}} | Target Iklan X: {{x_ad_target}})
+Aktivitas: Prosedur Penggunaan Tool Kali Linux untuk Analisa Mendalam.
+
+Susun modul teknis praktis (hands-on) untuk investigator:
+1. Analisis Akun & Postingan X.com (Iklan Penyebaran):
+   - Command line scraping riwayat cuitan akun promotor {{x_ad_target}}.
+   - Mengurai t.co shortened link menggunakan curl -sIL untuk memperoleh canonical URL channel/invite link Telegram.
+   - Mengambil snapshot halaman web X menggunakan tool headless browser (misal monolith atau singlefile-cli) lengkap dengan HTTP header response.
+2. Analisis Struktur Channel/Grup Telegram {{telegram_target}}:
+   - Mengambil Channel Metadata: Title, Username, Peer ID, Creation Date, Admin list (jika terbuka).
+   - Ekstraksi pesan terindikasi doxing (NIK, nomor telepon, alamat, nama keluarga) menggunakan Regex matching pattern.
+   - Parsing forward provenance: melacak pesan yang di-forward dari channel sumber pertama (Original Sender ID / Fwd From Channel ID).
+3. Inspeksi Konten Media:
+   - Ekstraksi metadata media menggunakan exiftool untuk memeriksa sisa data geolokasi, device model, dan encoding software.`,
+              versions: []
+            },
+            {
+              id: 'micro_2_2_data_collection',
+              title: '[MICRO 2.2] Prosedur Pengumpulan & Hashing Bukti Digital untuk Pelaporan',
+              tags: ['Tahap-2', 'Micro', 'Forensik', 'Hashing', 'Koleksi-Data'],
+              template: `Konteks: Tahap 2 - Eksekusi Investigasi (Kasus: {{case_id}} | Enkripsi: {{encryption_key_id}})
+Aktivitas: Standar Operasional Pengumpulan Bukti Digital & Non-Repudiation Hashing.
+
+Berikan SOP teknis pengumpulan data bukti digital:
+1. Standarisasi Tangkapan Layar Forensik:
+   - Full screen capture menyertakan UTC system clock, browser address bar lengkap, dan inspector panel.
+   - Perekaman video scrolling capture untuk membuktikan interaksi dinamis dalam grup Telegram.
+2. Hashing Cryptographic & Digital Signing:
+   - Perhitungan ganda: SHA-256 dan SHA-512 untuk setiap file gambar/video NCII (tanpa mengubah atau membuka file di viewer yang memodifikasi timestamp).
+   - Prosedur isolasi konten NCII: file disimpan dalam arsip terenkripsi aes-256-cbc menggunakan key referensi: {{encryption_key_id}}.
+3. Matriks Log Bukti Digital:
+   Format tabel log bukti yang mencakup: Evidence No, Timestamp, Source URL/ID, File Name, SHA-256 Checksum, File Size (bytes), Investigator Callsign.`,
+              versions: []
+            },
+            {
+              id: 'sub_tahap_3_takedown',
+              title: '[SUB-PROMPT 3] Inisiasi Alur Takedown Multi-Platform & Koordinasi Lembaga',
+              tags: ['Tahap-3', 'Sub', 'Takedown', 'Reporting', 'Kominfo', 'StopNCII'],
+              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Target: {{telegram_target}}):
+Inisiasi Tahap 3: Alur Pelaporan Teknis & Eksekusi Takedown Multi-Platform.
+
+Tujuan:
+Melakukan tindakan pemutusan akses (takedown), pembekuan akun/channel penyebar, dan pencegahan sirkulasi ulang konten intim tanpa persetujuan (NCII hash-matching) di seluruh platform terkait secara serentak.
+
+Instruksikan modul ini dengan fokus:
+1. Pemetaan eskalasi kanal teknis pelaporan resmi (bukan laporan publik biasa).
+2. Prosedur pembuatan perceptual hash (pHash/MD5) untuk proteksi proaktif melalui StopNCII.org.
+3. Formulasi laporan aduan konten Kominfo (aduankonten.id) dengan argumen teknis forensik.
+4. Laporan pelanggaran Terms of Service (ToS) & Abuse ke Telegram Trust & Safety serta X.com Safety Team.`,
+              versions: []
+            },
+            {
+              id: 'micro_3_1_workflow_platforms',
+              title: '[MICRO 3.1] Alur Pelaporan Teknis Spesifik Platform (Telegram, X, stopncii.org, aduankonten.id)',
+              tags: ['Tahap-3', 'Micro', 'Takedown', 'Telegram', 'X-Twitter', 'StopNCII', 'Kominfo'],
+              template: `Konteks: Tahap 3 - Reporting & Takedown (Kasus: {{case_id}} | StopNCII Ref: {{stopncii_case_id}})
+Aktivitas: Alur Eksekusi Pelaporan Khusus per Endpoint Penanganan Kejahatan.
+
+Susun panduan teknis langkah-demi-langkah (actionable checklist):
+1. StopNCII.org Integration Workflow:
+   - Prosedur kalkulasi hash gambar/video langsung di perangkat klien (client-side hashing PDQ/MD5 tanpa mengunggah media intim mentah).
+   - Panduan pencatatan Case ID StopNCII: {{stopncii_case_id}} untuk sinkronisasi proteksi ke platform mitra (Meta, TikTok, Reddit, OnlyFans).
+2. Aduankonten.id (Kementerian Kominfo RI):
+   - Prosedur pengiriman tiket aduan khusus instansi resmi/mitra perlindungan perempuan.
+   - Parameter wajib: Tautan persis Telegram ({{telegram_target}}), tangkapan layar bukti ber-hash, klasifikasi pelanggaran: NCII & Doxing Ilegal.
+3. Telegram Abuse Handling:
+   - Jalur pelaporan: Abuse bot (@notoscam), email resmi abuse@telegram.org, stopca@telegram.org, dan portal CSIRT takedown request.
+   - Format penyebutan Target: Channel ID numerik, Message Link spesifik (t.me/c/xxxxx/yyyy).
+4. X.com Safety & Law Enforcement Request:
+   - Melaporkan akun promotor {{x_ad_target}} melalui X Safety Takedown & Portal Law Enforcement Request System (LERS).
+   - Penekanan pelanggaran: "Distribution of Non-Consensual Sexual Imagery & Malicious Doxing".`,
+              versions: []
+            },
+            {
+              id: 'micro_3_2_report_templates',
+              title: '[MICRO 3.2] Template Formulir & Notifikasi Pelaporan Teknis Takedown Cepat',
+              tags: ['Tahap-3', 'Micro', 'Template', 'Takedown', 'Format-Report'],
+              template: `Konteks: Tahap 3 - Reporting & Takedown (Kasus: {{case_id}} | Post X: {{x_post_id}})
+Aktivitas: Penyusunan Template Laporan Takedown Bahasa Inggris & Bahasa Indonesia.
+
+Hasilkan 3 template laporan teknis resmi siap kirim:
+1. Template Email ke Telegram Abuse (abuse@telegram.org & dmca@telegram.org):
+   - Subject: [URGENT TAKEDOWN REQUEST - NCII & DOXING] Telegram Entity: {{telegram_target}}
+   - Body: Rincian teknis URL, Channel ID, ID pesan yang memuat media tanpa izin, bukti hash, dan pernyataan otoritas investigasi.
+2. Template Tiket untuk Tim Safety X.com:
+   - Subject: [SAFETY ESCALATION] Unauthorized NCII Promotional Campaign - Post ID: {{x_post_id}}
+   - Body: URL Tweet, Akun Promotor ({{x_ad_target}}), target link Telegram, dan timestamp penayangan.
+3. Template Nota Pengajuan Pemblokiran ke Aduankonten.id Kominfo:
+   - Format resmi instansi/NGO: Nomor Registrasi Kasus {{case_id}}, deskripsi temuan bukti digital, lampiran hash SHA-256, dan permohonan blokir akses domain/t.me.`,
+              versions: []
+            },
+            {
+              id: 'sub_tahap_4_dokumentasi',
+              title: '[SUB-PROMPT 4] Inisiasi Finalisasi Dokumentasi Kasus & Chain of Custody',
+              tags: ['Tahap-4', 'Sub', 'Dokumentasi', 'Chain-of-Custody', 'Work-Report'],
+              template: `Merujuk pada MASTER CONTEXT (Kasus: {{case_id}} | Petugas: {{officer_callsign}}):
+Inisiasi Tahap 4: Dokumentasi Akhir, Laporan Kerja (Work Report), dan Pengarsipan Bukti Sah.
+
+Tujuan:
+Menyusun Laporan Kerja Teknis (Technical Work Report) komprehensif yang siap dipertanggungjawabkan di hadapan instansi penyidik/pengadilan serta mengamankan arsip bukti digital dalam cold storage terverifikasi.
+
+Instruksikan modul ini dengan fokus:
+1. Standardisasi sistematika Technical Incident & Investigation Report.
+2. Pencatatan kronologi forensik (timeline analysis) dari deteksi iklan di X hingga penyebaran di Telegram.
+3. Protokol penyegelan arsip digital (GPG encryption, write-blocking verification, dan offsite physical cold storage).`,
+              versions: []
+            },
+            {
+              id: 'micro_4_1_work_report',
+              title: '[MICRO 4.1] Penyusunan Laporan Kerja Resmi (Technical Work Report)',
+              tags: ['Tahap-4', 'Micro', 'Work-Report', 'Dokumentasi', 'Format-Laporan'],
+              template: `Konteks: Tahap 4 - Dokumentasi Akhir (Kasus: {{case_id}} | Waktu: {{report_timestamp}})
+Aktivitas: Format Baku Laporan Kerja Investigasi Siber (Technical Work Report).
+
+Susun template dokumen laporan investigasi teknis berstandar operasional:
+1. Header Dokumen:
+   - Nama Lembaga/Unit Investigasi Cybercrime
+   - Case Reference Number: {{case_id}}
+   - Tanggal & Waktu UTC Laporan: {{report_timestamp}}
+   - Lead Investigator: {{officer_callsign}}
+2. Ringkasan Eksekutif Teknis (Technical Summary):
+   - Deskripsi singkat skema doxing dan distribusi konten NCII.
+   - Status terkini channel Telegram ({{telegram_target}}) dan akun X.com ({{x_ad_target}}).
+3. Temuan Investigasi Terperinci:
+   - Kronologi penemuan (Discovery Timeline).
+   - Analisis relasi akun promotor X dengan channel Telegram.
+   - Identifikasi indikator digital (IP, Telepon, Username history jika terungkap).
+4. Tindakan Takedown & Respons Platform:
+   - Tiket pengaduan, status konfirmasi takedown Telegram/X/Kominfo, dan StopNCII Token ID: {{stopncii_case_id}}.
+5. Rekomendasi Teknis Penanganan Lanjutan.`,
+              versions: []
+            },
+            {
+              id: 'micro_4_2_evidence_archival',
+              title: '[MICRO 4.2] Prosedur Pengarsipan Bukti Digital Sah & Terverifikasi',
+              tags: ['Tahap-4', 'Micro', 'Arsip', 'Forensik', 'Integritas-Data'],
+              template: `Konteks: Tahap 4 - Dokumentasi Akhir (Kasus: {{case_id}} | Unit Key: {{investigation_unit_key}})
+Aktivitas: Prosedur Cold Storage & Penguncian Bukti Digital (Evidence Seal).
+
+Rancang SOP teknis dan instruksi CLI pengarsipan digital jangka panjang:
+1. Pembuatan Kontainer Arsip Terenkripsi:
+   - Menggabungkan seluruh folder kasus /evidence/{{case_id}}/ ke dalam file tar:
+     tar -cvf {{case_id}}_evidence.tar /evidence/{{case_id}}/
+   - Enkripsi kontainer menggunakan GPG (asymmetric encryption dengan public key resmi unit investigasi):
+     gpg --encrypt --recipient {{investigation_unit_key}} {{case_id}}_evidence.tar
+2. Verifikasi Integritas & Segel Digital:
+   - Generate manifest hash akhir: sha256sum {{case_id}}_evidence.tar.gpg > final_manifest.sha256
+   - Penandatanganan digital (Digital Signature) pada file manifest: gpg --clearsign final_manifest.sha256
+3. Prosedur Penyimpanan Media Fisik (Cold Storage):
+   - Pemindahan ke media penyimpanan WORM (Write Once Read Many) atau USB forensik terenkripsi hardware.
+   - Pengisian Berita Acara Penyitaan & Pengarsipan Artefak Digital (Chain of Custody Certificate).`,
+              versions: []
+            }
+          ];
+        },
+
+        getDefaultChainSteps() {
+          return [
+            {
+              id: 'step_1',
+              promptId: 'micro_1_3_directory_custody',
+              sourceMode: 'direct',
+              variables: ['case_id'],
+              variableValues: {
+                case_id: 'CCU-NCII-2026-0987'
+              }
+            },
+            {
+              id: 'step_2',
+              promptId: 'micro_2_1_tool_analysis',
+              sourceMode: 'direct',
+              variables: ['case_id', 'x_ad_target', 'telegram_target'],
+              variableValues: {
+                case_id: 'CCU-NCII-2026-0987',
+                x_ad_target: '@promo_link_tele69',
+                telegram_target: 't.me/priv_leak_vip_channel'
+              }
+            },
+            {
+              id: 'step_3',
+              promptId: 'micro_3_1_workflow_platforms',
+              sourceMode: 'pipe_previous',
+              variables: ['case_id', 'stopncii_case_id', 'telegram_target', 'x_ad_target'],
+              variableValues: {
+                case_id: 'CCU-NCII-2026-0987',
+                stopncii_case_id: 'SN-8842-9901-ID',
+                telegram_target: 't.me/priv_leak_vip_channel',
+                x_ad_target: '@promo_link_tele69'
+              }
+            },
+            {
+              id: 'step_4',
+              promptId: 'micro_4_1_work_report',
+              sourceMode: 'pipe_previous',
+              variables: ['case_id', 'report_timestamp', 'officer_callsign', 'telegram_target', 'x_ad_target', 'stopncii_case_id'],
+              variableValues: {
+                case_id: 'CCU-NCII-2026-0987',
+                report_timestamp: '2026-09-27T14:30:00Z',
+                officer_callsign: 'CyberOps-Inspector-04',
+                telegram_target: 't.me/priv_leak_vip_channel',
+                x_ad_target: '@promo_link_tele69',
+                stopncii_case_id: 'SN-8842-9901-ID'
+              }
+            }
+          ];
+        }
+      }
+    }
+  </script>
+</body>
+</html>

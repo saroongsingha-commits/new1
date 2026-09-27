@@ -1,0 +1,8 @@
+{
+  "name": "CyberCrime & NCII Investigation Workbench",
+  "description": "Workbench sistem prompt hierarkis dan dinamis untuk pelatihan teknis investigasi cybercrime, penanganan doxing dan NCII di Telegram serta iklan X.com.",
+  "requestFramePermissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
